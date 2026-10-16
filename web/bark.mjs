@@ -44,7 +44,7 @@ export function formatBark(job,{language='zh'}={}) {
    return {title,body,group:zh?'Codex 回响':'Codex Echo',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};
   }
   const type=e.resetTypes?.length>1?(zh?'全局重置 + 重置券':'Global + reset credit'):e.resetType==='banked'?(zh?'重置券公告':'Reset credit announcement'):(zh?'全局重置公告':'Global reset announcement');
-  title=(zh?'Codex 回响 · ':'Codex Echo · ')+type;
+  title=plan?.kind==='completed'?(zh?'Codex 回响 · 来源确认重置完成':'Codex Echo · Reset completion confirmed'):(zh?'Codex 回响 · ':'Codex Echo · ')+type;
   const quote=clip(zh?chineseText(e.original,e.translation):e.original);
   body=zh?`消息原话（中文译文）\n${quote}\n\n实际重置时间\n${e.resetAt?bothTimes(e.resetAt,true):'未说明，无法确定'}\n\n说明\n公开公告不代表你的账号额度已恢复，请以账号显示为准。\n\n发帖时间\n${bothTimes(e.postedAt,true)}\n\n来源：Tibo · @thsottiaux。点通知查看完整推文与出处。`:`Original announcement\n${quote}\n\nActual reset time\n${e.resetAt?bothTimes(e.resetAt,false):'Not stated; cannot be determined.'}\n\nA public announcement does not confirm your account allowance has recovered.\n\nPublished\n${bothTimes(e.postedAt,false)}\n\nSource: Tibo · @thsottiaux. Tap for the full post and source.`;
   url.hash='/pages/index/index?record='+encodeURIComponent(e.id);

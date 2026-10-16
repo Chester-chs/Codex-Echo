@@ -73,6 +73,21 @@ test('a revised announced target cancels the old retry and sends the new plan on
  assert.deepEqual((await barkStatus(e)).receipts.map(r=>r.state).sort(),['cancelled','sent']);
 });
 
+test('personal notifiers distinguish plan publication from a later verified completion and deduplicate each',async()=>{
+ const e=env(),sent=[],send=async job=>{sent.push(job);return {state:'sent',code:'accepted'};};
+ const fresh=(records,time)=>({...feed(records),sources:[{name:'history',status:'ok',lastSuccessAt:iso(time)}]});
+ await runBark(e,fresh([],now),{now,send});
+ const plan={...post('2117536046041595910'),postedAt:iso(now+1000),original:'We will reset in 5 hours.',textStatus:'verified'};
+ await runBark(e,fresh([plan],now+2000),{now:now+2000,send});
+ const at=now+5*3600000+61000;
+ await runBark(e,fresh([plan],at),{now:at,send});assert.equal(sent.length,1);
+ const done={...post('2117536046041595911'),postedAt:iso(at-1000),category:'post',resetType:'unknown',original:'The reset is complete.',textStatus:'verified'};
+ await runBark(e,fresh([done,plan],at),{now:at,send});
+ await runBark(e,fresh([done,plan],at+1000),{now:at+1000,send});
+ assert.equal(sent.length,2);assert.equal(sent[1].event.id,done.id);
+ for(const language of ['zh','en'])assert.match(formatBark(sent[1],{language}).title,language==='zh'?/来源确认.*完成/:/completion confirmed/i);
+});
+
 test('large history baselines stay within the free D1 statement budget',async()=>{
  const e=env();await runBark(e,feed(Array.from({length:500},(_,i)=>post(String(i+1000)))),{now});
  assert.equal(e.NOTIFY_DB.sql.prepare('SELECT count(*) AS n FROM bark_events').get().n,500);

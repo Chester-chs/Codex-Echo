@@ -89,3 +89,5 @@ The current shared free trial supports 30 devices and 20 send attempts per devic
 **Use Bark for closed-page alerts. Page notifications require the page to keep running.** Running your own program is optional; see the separate [GitHub setup guide](GITHUB_BARK.en.md) if desired.
 
 The Reset announcements switch also includes newly announced precise reset plans. These messages say Planned reset announced and do not confirm completion. No reconnection is needed; the forecast threshold does not apply to plans.
+
+Two-stage alerts: with Reset announcements enabled, a new plan triggers one alert and a later newly collected explicit completion confirmation triggers a separate alert. Each message is deduplicated. Reaching the target alone never triggers completion; without source confirmation the state stays unconfirmed and says nothing about your personal account allowance.

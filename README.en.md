@@ -6,6 +6,28 @@ A simple **Codex reset announcement and forecast radar**: the latest announcemen
 
 **[Open the website](https://echo-radar.pages.dev/) · [Connect Bark on iPhone](docs/BARK_SETUP.en.md)**
 
+## Website preview
+
+These are screenshots of the public website. Dates, counts and forecasts are snapshots; visit the website for current values.
+
+![Codex Echo desktop: latest announcement, forecast and history statistics](docs/images/desktop-en.png)
+
+<details>
+<summary>View the mobile layout</summary>
+
+<img src="docs/images/mobile-en.png" alt="Actual Codex Echo mobile screenshot" width="390" />
+
+</details>
+
+<details>
+<summary>View an announced-plan example (synthetic data)</summary>
+
+**This is a local simulation, not a real announcement or a claim that a reset is currently five hours away.** A precise source announcement activates the countdown alongside the latest historical post. This example shows the Chinese interface.
+
+![Synthetic announced reset plan example, not a real announcement](docs/images/reset-plan-example.png)
+
+</details>
+
 ## Recommended: connect Bark on the website
 
 1. Install **Bark** on your iPhone and allow Lock Screen notifications.
@@ -62,7 +84,7 @@ When verified Tibo original text directly states a precise time, a prominent pla
 
 At zero, the card says **Awaiting confirmation**; it never automatically declares completion or increments history. Later explicit completion, cancellation or a new plan updates the state. Conservative rules support direct hour/minute durations and full UTC/GMT dates. Vague, conditional or unsupported expressions do not create a countdown. Unconfirmed plans disappear 24 hours after their target.
 
-The Bark **Reset announcements** switch also controls new plan alerts, labelled **Planned reset announced**. Forecast thresholds only affect forecast alerts. Superseded, cancelled and past-target plan retries stop. Existing subscriptions need no reconnection.
+The Bark **Reset announcements** switch also controls new plan alerts, labelled **Planned reset announced**. Forecast thresholds only affect forecast alerts. Superseded, cancelled and past-target plan retries stop. Existing subscriptions need no reconnection. With Reset announcements enabled, a new plan and a later explicit source confirmation each generate their own deduplicated alert. Reaching the target alone never triggers a completion alert or confirms your personal account allowance.
 
 ## Data boundaries
 

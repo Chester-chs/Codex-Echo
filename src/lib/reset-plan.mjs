@@ -47,6 +47,7 @@ export function annotateResetPlan(record) {
  const directive=interpretResetDirective(record);
  if(directive?.kind==='scheduled')return {...record,category:'schedule',scheduledAt:directive.scheduledAt,resetAt:null,resetType:directive.scope,resetTypes:[directive.scope]};
  if(directive?.kind==='cancelled')return {...record,category:'post',scheduledAt:null,resetAt:null};
+ if(directive?.kind==='completed')return {...record,category:'reset',scheduledAt:null,resetType:directive.scope,resetTypes:[...new Set([...(Array.isArray(record.resetTypes)?record.resetTypes:[]).filter(t=>['automatic','banked'].includes(t)),directive.scope])]};
  if(record.category==='schedule')return {...record,category:directive?.kind==='completed'?'reset':'post',scheduledAt:null};
  return record;
 }
@@ -62,7 +63,7 @@ export function getResetPlanState(records=[],now=Date.now()) {
 }
 
 export function isCurrentPlanNotice(record,records,now) {
- const current=records.find(r=>r.id===record.id)||record;
+ const current=annotateResetPlan(records.find(r=>r.id===record.id)||record);
  const directive=interpretResetDirective(current);
  if(directive?.kind==='cancelled')return false;
  if(directive?.kind!=='scheduled')return record.category!=='schedule'&&current.category!=='post'&&current.category!=='forecast';

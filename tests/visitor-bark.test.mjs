@@ -40,6 +40,19 @@ test('a cancelled or superseded plan cannot be sent from a pending visitor queue
  const sent=[];await runVisitorBark(e,feed([old,cancel]),{now:NOW+3000,send:async job=>{sent.push(job);return {state:'sent'};}});assert.equal(sent.length,0);
 });
 
+test('visitors receive one plan alert and one verified completion alert even before source classification catches up',async()=>{
+ const e=env();await bind(e,'two-stage-device-001',prefs({forecastAlerts:false,threshold:90}));
+ const plan={...reset('2117536046041595910'),original:'We will reset in 5 hours.',textStatus:'verified'};
+ const sent=[],send=async job=>{sent.push(job);return {state:'sent',code:'provider_accepted'};};
+ await runVisitorBark(e,feed([plan],null,NOW+2000),{now:NOW+2000,send});
+ const at=NOW+5*3600000+61000;
+ await runVisitorBark(e,feed([plan],null,at),{now:at,send});assert.equal(sent.length,1,'Passing the target is not completion');
+ const done={...reset('2117536046041595911',at-1000),category:'post',resetType:'unknown',original:'The reset is complete.',textStatus:'verified'};
+ await runVisitorBark(e,feed([done,plan],null,at),{now:at,send});
+ await runVisitorBark(e,feed([done,plan],null,at+1000),{now:at+1000,send});
+ assert.equal(sent.length,2);assert.equal(sent[1].event.id,done.id);assert.equal(sent[1].event.resetAt??null,null);
+});
+
 test('visitor subscriptions reject an unrelated website before processing a device address',async()=>{
  const request=new Request('https://radar.test/api/bark/subscription',{method:'POST',headers:{Origin:'https://unrelated.test','Content-Type':'application/json'},body:JSON.stringify({deviceAddress:'https://api.day.app/sample-device-key'})});
  const response=await handleRequest(request,{});
