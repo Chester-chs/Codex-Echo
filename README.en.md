@@ -47,9 +47,19 @@ These are screenshots of the public website. Dates, counts and forecasts are sna
 
 No GitHub account, code download or purchased server is needed. The full guide covers each step, saving, unsubscribing and troubleshooting messages visible inside Bark but absent from the Lock Screen.
 
+**After connecting and saving Bark, you do not need to keep the website open or your computer switched on.** The notifier runs in the cloud. It continues checking sources and sending eligible alerts when the browser or page is closed, or your computer is shut down.
+
+Keep **Reset announcements** enabled under **Phone alerts from the cloud**:
+
+- **Plan announced:** a newly collected, eligible explicit reset plan triggers one plan alert.
+- **Completion confirmed:** a later newly collected explicit source confirmation triggers a separate completion alert. The two message types are deduplicated independently.
+- **Target time reached only:** the website shows **Awaiting confirmation**. Reaching the target does not automatically confirm completion or trigger a completion alert.
+
+Your iPhone needs an internet connection and permission to display Bark notifications. Sources update approximately every 10 minutes; cloud delivery runs every minute, so alerts may be delayed. Initial connection does not replay historical messages. This applies to Bark cloud alerts; page notifications still require the page to remain open and running.
+
 | Mode | Requirement |
 |---|---|
-| **Bark cloud alerts (recommended)** | Connect your own Bark; the cloud can send with the website closed. Allow phone notifications |
+| **Bark cloud alerts (recommended)** | After connecting and saving, cloud delivery works with the website closed and computer shut down. Your phone needs internet access and notification permission |
 | Page notifications | **Keep the page open and running.** Closing stops them; backgrounding or locking may suspend them |
 
 The preferences are independent. Use Bark for closed-page alerts. The shared trial currently supports 30 devices, with 20 attempts per device per day, enough for a small group.
