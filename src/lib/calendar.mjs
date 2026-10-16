@@ -1,4 +1,4 @@
-// All calendar marks refer to announcement publication dates, never inferred completion times.
+// Historical marks use publication dates. Planned targets have a separate marker and never count as history.
 export const announcementTypes = record => [...new Set((record.resetTypes?.length?record.resetTypes:[record.type]).filter(type=>['automatic','banked'].includes(type)))];
 export function dayKey(value, zone = 'UTC') {
   const date = new Date(value);
@@ -30,7 +30,7 @@ export function moveMonth(month, offset) {
   return `${next.getUTCFullYear()}-${String(next.getUTCMonth()+1).padStart(2,'0')}`;
 }
 
-export function monthGrid(month, overview, today) {
+export function monthGrid(month, overview, today, plan=null, zone='UTC') {
   const [year, m] = month.split('-').map(Number);
   const first = new Date(Date.UTC(year,m-1,1));
   const length = new Date(Date.UTC(year,m,0)).getUTCDate();
@@ -40,7 +40,7 @@ export function monthGrid(month, overview, today) {
     const key=`${month}-${String(day).padStart(2,'0')}`;
     const records=overview.byDay[key] || [];
     total+=records.length; if(records.length)recordedDays++;
-    cells.push({key,day,records,types:['automatic','banked','unknown'].filter(t=>records.some(r=>t==='unknown'?!announcementTypes(r).length:announcementTypes(r).includes(t))),today:key===today});
+    cells.push({key,day,records,planned:Boolean(plan&&['scheduled','awaiting'].includes(plan.phase)&&dayKey(plan.scheduledAt,zone)===key),types:['automatic','banked','unknown'].filter(t=>records.some(r=>t==='unknown'?!announcementTypes(r).length:announcementTypes(r).includes(t))),today:key===today});
   }
   while(cells.length%7)cells.push(null);
   return {cells,total,recordedDays};

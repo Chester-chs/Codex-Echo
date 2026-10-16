@@ -24,6 +24,22 @@ const reset=(id,posted=NOW+1000)=>({id,url:'https://x.com/thsottiaux/status/'+id
 const forecast=(probability=70,time=NOW+1000)=>({id:'watch-1',kind:'source-watch',probability,basis:'Public clue',basisZh:'公开线索',windowText:'within 24h',publishedAt:iso(time),checkedAt:iso(time),sourceFreshUntil:iso(time+1800000),validUntil:iso(time+3600000),sourceUrl:reset('10').url});
 const feed=(records=[],f=null,time=NOW)=>({records,forecast:f,sources:[{name:'history',status:'ok',lastSuccessAt:iso(time)}]});
 
+test('announced plans use reset opt-in, ignore forecast thresholds, and never dispatch after their target',async()=>{
+ const e=env();await bind(e,'plan-device-001',prefs({forecastAlerts:false,threshold:90}));
+ const plan={...reset('2117536046041595904'),original:'We will reset Codex in 5 hours.',textStatus:'verified'};
+ const sent=[];await runVisitorBark(e,feed([plan]),{now:NOW+2000,send:async job=>{sent.push(job);return {state:'sent',code:'provider_accepted'};}});
+ assert.equal(sent.length,1);assert.equal(sent[0].event.scheduledAt,iso(NOW+1000+5*3600000));
+ const e2=env();await bind(e2,'plan-device-002');
+ let late=0;await runVisitorBark(e2,feed([plan],null,NOW+5*3600000+2000),{now:NOW+5*3600000+2000,send:async()=>{late++;return {state:'sent'};}});assert.equal(late,0);
+});
+
+test('a cancelled or superseded plan cannot be sent from a pending visitor queue',async()=>{
+ const e=env();await bind(e,'plan-device-003');
+ const old={...reset('2117536046041595904'),original:'We will reset in 5 hours.',textStatus:'verified'};
+ const cancel={...reset('2117536046041595905',NOW+2000),original:'The reset is cancelled.',textStatus:'verified'};
+ const sent=[];await runVisitorBark(e,feed([old,cancel]),{now:NOW+3000,send:async job=>{sent.push(job);return {state:'sent'};}});assert.equal(sent.length,0);
+});
+
 test('visitor subscriptions reject an unrelated website before processing a device address',async()=>{
  const request=new Request('https://radar.test/api/bark/subscription',{method:'POST',headers:{Origin:'https://unrelated.test','Content-Type':'application/json'},body:JSON.stringify({deviceAddress:'https://api.day.app/sample-device-key'})});
  const response=await handleRequest(request,{});

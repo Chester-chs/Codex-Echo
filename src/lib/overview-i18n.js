@@ -1,5 +1,6 @@
 export const overviewMessages = {
   zh: {
+    plannedReset:'计划重置',plannedNotCompleted:'虚线标记计划时间，尚未确认完成；不计入历史公告统计。',planOriginal:'查看计划原文',
     overviewTitle:'Codex 重置，一眼看清。', overviewSubtitle:'最近公告、重置日历与 Tibo 推文，都在这一页。',
     latestReset:'上一次重置公告', noReset:'暂无重置公告', announcementTime:'公告发布时间', completionUnknown:'实际完成时刻未说明',
     daysAgo:'天', hoursAgo:'小时', minutesAgo:'分钟', ago:'前', justNow:'刚刚', readOriginal:'查看公告详情',
@@ -21,6 +22,7 @@ export const overviewMessages = {
     weekdays:['一','二','三','四','五','六','日'],
   },
   en: {
+    plannedReset:'Planned reset',plannedNotCompleted:'Dashed marks show a planned target, not confirmed completion; excluded from historical counts.',planOriginal:'Read original plan',
     overviewTitle:'Codex resets. At a glance.', overviewSubtitle:'The latest announcement, a calendar, and the history. All in one place.',
     latestReset:'Latest reset announcement', noReset:'No reset announcements yet', announcementTime:'Announcement published', completionUnknown:'Completion time not stated',
     daysAgo:'d', hoursAgo:'h', minutesAgo:'min', ago:'ago', justNow:'Just now', readOriginal:'Read the full announcement',

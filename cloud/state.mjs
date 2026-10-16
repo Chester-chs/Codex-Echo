@@ -36,7 +36,7 @@ export function publicFeed(state,now=Date.now()){
  const s=state||{records:[],sources:[]};const records=mergeRecords(s.records).sort((a,b)=>Date.parse(b.postedAt)-Date.parse(a.postedAt));
  const fresh=s.sources.some(x=>x.status==='ok'&&Date.parse(x.lastSuccessAt)<=now+60000&&now-Date.parse(x.lastSuccessAt)<1800000);
  const model=conditionalForecast(records,now);delete model.diagnostics;
- return {resets:records.filter(r=>r.category==='reset'),signals:records.filter(r=>r.category==='forecast'),posts:records,forecast:fresh&&active(s.forecast,now)?s.forecast:null,sources:s.sources,model,generatedAt:iso(now),lastPolledAt:s.lastSuccessAt||null,lastAttemptAt:s.lastAttemptAt||null,status:!fresh?'stale':s.sources.some(s=>s.status==='error')?'degraded':'live'};
+ return {resets:records.filter(r=>['reset','schedule'].includes(r.category)),signals:records.filter(r=>r.category==='forecast'),posts:records,forecast:fresh&&active(s.forecast,now)?s.forecast:null,sources:s.sources,model,generatedAt:iso(now),lastPolledAt:s.lastSuccessAt||null,lastAttemptAt:s.lastAttemptAt||null,status:!fresh?'stale':s.sources.some(s=>s.status==='error')?'degraded':'live'};
 }
 export function viewUser(u){return u?{...u.settings,resetCredits:u.credits.reset,forecastCredits:u.credits.forecast,updatedAt:iso(u.updated)}:null;}
 export function subscribeUser(previous,input,grants,receipt,now=Date.now()){

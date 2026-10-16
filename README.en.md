@@ -56,6 +56,14 @@ Defaults: reset and forecast alerts on, 60% threshold, **Chinese notifications**
 
 Standard GitHub-hosted runner time in public repositories is currently free. Scheduled tasks can be delayed; public repositories with no activity for 60 days have scheduled workflows disabled. [Billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions) · [Scheduling limits](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
 
+## Announced reset plans
+
+When verified Tibo original text directly states a precise time, a prominent plan card shows a countdown and a separate calendar marker. The latest historical announcement stays visible. Relative times start at publication, never collection time.
+
+At zero, the card says **Awaiting confirmation**; it never automatically declares completion or increments history. Later explicit completion, cancellation or a new plan updates the state. Conservative rules support direct hour/minute durations and full UTC/GMT dates. Vague, conditional or unsupported expressions do not create a countdown. Unconfirmed plans disappear 24 hours after their target.
+
+The Bark **Reset announcements** switch also controls new plan alerts, labelled **Planned reset announced**. Forecast thresholds only affect forecast alerts. Superseded, cancelled and past-target plan retries stop. Existing subscriptions need no reconnection.
+
 ## Data boundaries
 
 Announcement counts are not personal account credits or completed resets. Publication time is not necessarily completion time. Probabilities are public AIPlanWatch assessments, not official OpenAI promises. The public post archive may be incomplete.

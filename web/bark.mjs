@@ -1,5 +1,6 @@
 import {getForecast,formatTime} from '../src/lib/domain.mjs';
 import {chineseText,localizedWindow} from '../src/lib/localized-content.mjs';
+import {interpretResetDirective,isCurrentPlanNotice,annotateResetPlan,resetNoticeKey} from '../src/lib/reset-plan.mjs';
 
 const iso=value=>new Date(value).toISOString();
 const number=(value,fallback,min,max)=>Number.isFinite(Number(value))&&value!==undefined?Math.max(min,Math.min(max,Math.round(Number(value)))):fallback;
@@ -35,6 +36,13 @@ export function formatBark(job,{language='zh'}={}) {
   title=zh?'Codex 回响 · 锁屏推送测试':'Codex Echo · Push test';
   body=zh?'这是一条测试通知，不代表发生重置或出现新的预测。\n\n通知由云端发送，关闭网页和电脑后仍可运行。请确认 iPhone 锁屏时能看到这条消息，点击可打开回响网页。':'This is a test, not a reset announcement or a new forecast.\n\nSent by the cloud service, independently of the website and your computer. Please check this message on your iPhone Lock Screen. Tap to open Echo.';
  }else if(job.kind==='reset'){
+  const plan=interpretResetDirective(e)||(e.category==='schedule'&&Number.isFinite(Date.parse(e.scheduledAt))?{kind:'scheduled',scheduledAt:e.scheduledAt}:null);
+  if(plan?.kind==='scheduled'){
+   title=zh?'Codex 回响 · 已公布重置计划':'Codex Echo · Planned reset announced';
+   body=zh?`计划重置时间\n${bothTimes(plan.scheduledAt,true)}\n\n来源原话（中文译文）\n${clip(chineseText(e.original,e.translation))}\n\n这是来源公布的计划，不代表已经完成；到点后仍等待完成确认，也不保证你的个人账号额度恢复。\n\n公告发布于\n${bothTimes(e.postedAt,true)}`:`Planned reset time\n${bothTimes(plan.scheduledAt,false)}\n\nOriginal announcement\n${clip(e.original)}\n\nAn announced plan, not a completed reset. Completion still needs confirmation after the target time; personal account availability is not guaranteed.\n\nAnnounced\n${bothTimes(e.postedAt,false)}`;
+   url.hash='/pages/index/index?record='+encodeURIComponent(e.id);
+   return {title,body,group:zh?'Codex 回响':'Codex Echo',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};
+  }
   const type=e.resetTypes?.length>1?(zh?'全局重置 + 重置券':'Global + reset credit'):e.resetType==='banked'?(zh?'重置券公告':'Reset credit announcement'):(zh?'全局重置公告':'Global reset announcement');
   title=(zh?'Codex 回响 · ':'Codex Echo · ')+type;
   const quote=clip(zh?chineseText(e.original,e.translation):e.original);
@@ -83,15 +91,15 @@ export async function runBark(env,state,{now=Date.now,send=(job)=>sendBark(job,e
   await db.prepare("UPDATE bark_events SET state='unknown',code='interrupted',updated=? WHERE recipient=? AND state='sending' AND EXISTS(SELECT 1 FROM bark_control WHERE id=? AND lease_token=? AND lease_until>?)").bind(n,id,id,token,n).run();
   const control=await db.prepare('SELECT baseline_at FROM bark_control WHERE id=?').bind(id).first();
   const fresh=ready(state,n),f=getForecast(state?.forecast,n);
-  const resets=(state?.records||[]).filter(r=>r.category==='reset'&&['automatic','banked'].includes(r.resetType)&&/^\d+$/.test(r.id)&&/^https:\/\/(?:x\.com|twitter\.com)\/(?:thsottiaux|i)\/status\/\d+$/.test(r.url)&&Date.parse(r.postedAt)<=n);
+  const resets=(state?.records||[]).map(annotateResetPlan).filter(r=>['reset','schedule'].includes(r.category)&&['automatic','banked'].includes(r.resetType)&&/^\d+$/.test(r.id)&&/^https:\/\/(?:x\.com|twitter\.com)\/(?:thsottiaux|i)\/status\/\d+$/.test(r.url)&&Date.parse(r.postedAt)<=n);
   if(fresh&&!control.baseline_at){
-   const rows=[db.prepare("INSERT OR IGNORE INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) SELECT ?,'reset:'||value,'reset','{}','baseline',?,?,? FROM json_each(?)").bind(id,n,n,n,JSON.stringify(resets.map(r=>r.id)))];
+   const rows=[db.prepare("INSERT OR IGNORE INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) SELECT ?,value,'reset','{}','baseline',?,?,? FROM json_each(?)").bind(id,n,n,n,JSON.stringify(resets.map(resetNoticeKey)))];
    if(f)rows.push(db.prepare('INSERT OR IGNORE INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) VALUES(?,?,?,?,?,?,?,?)').bind(id,await forecastKey(f),'forecast','{}','baseline',n,n,n));
    rows.push(db.prepare('UPDATE bark_control SET baseline_at=? WHERE id=? AND lease_token=?').bind(n,id,token));
    await db.batch(rows);
   }else if(fresh){
-   const eligible=settings.resetAlerts?resets.filter(r=>Date.parse(r.postedAt)>=control.baseline_at&&n-Date.parse(r.postedAt)<21600000).map(snapshot):[];
-   if(eligible.length)await db.prepare("INSERT OR IGNORE INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) SELECT ?,'reset:'||json_extract(value,'$.id'),'reset',value,'pending',?,?,? FROM json_each(?)").bind(id,n,n,n,JSON.stringify(eligible)).run();
+   const eligible=settings.resetAlerts?resets.filter(r=>Date.parse(r.postedAt)>=control.baseline_at&&n-Date.parse(r.postedAt)<21600000).map(r=>({...snapshot(r),noticeKey:resetNoticeKey(r)})):[];
+   if(eligible.length)await db.prepare("INSERT OR IGNORE INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) SELECT ?,json_extract(value,'$.noticeKey'),'reset',value,'pending',?,?,? FROM json_each(?)").bind(id,n,n,n,JSON.stringify(eligible)).run();
    if(f&&settings.forecastAlerts&&f.probability>=settings.threshold&&Date.parse(f.publishedAt)>=control.baseline_at)await putEvent(db,id,await forecastKey(f),'forecast',f,'pending',n);
   }
   const currentForecastKey=f&&f.probability>=settings.threshold?await forecastKey(f):null;
@@ -99,7 +107,7 @@ export async function runBark(env,state,{now=Date.now,send=(job)=>sendBark(job,e
   for(const row of rows){
    const at=clock();if(at>=n+LEASE-20000||candidates>=3)break;
    const event=JSON.parse(row.payload),kind=row.kind;
-   const isEligible=time=>kind==='test'||ready(state,time)&&(kind==='reset'?settings.resetAlerts&&time-Date.parse(event.postedAt)<21600000:settings.forecastAlerts&&getForecast(event,time)&&row.event_key===currentForecastKey);
+   const isEligible=time=>kind==='test'||ready(state,time)&&(kind==='reset'?settings.resetAlerts&&time-Date.parse(event.postedAt)<21600000&&isCurrentPlanNotice(event,state.records||[],time):settings.forecastAlerts&&getForecast(event,time)&&row.event_key===currentForecastKey);
    const eligible=isEligible(at);
    if(!eligible){await db.prepare("UPDATE bark_events SET state='cancelled',code='disabled_or_expired',updated=? WHERE recipient=? AND event_key=? AND state IN ('pending','retry') AND attempts=? AND EXISTS(SELECT 1 FROM bark_control WHERE id=? AND lease_token=? AND lease_until>?)").bind(at,id,row.event_key,row.attempts,id,token,at).run();continue;}
    candidates++;

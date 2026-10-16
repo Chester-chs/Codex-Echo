@@ -1,3 +1,4 @@
+import {annotateResetPlan} from './reset-plan.mjs';
 const DAY = 86400000;
 const validDate = (value) =>
   typeof value === "string" && Number.isFinite(Date.parse(value));
@@ -11,7 +12,7 @@ export function normalizeFeed(payload, now = Date.now()) {
   if (!payload || !Array.isArray(payload.resets))
     throw new Error("Invalid feed response");
   const seen = new Set();
-  const records = payload.resets
+  const records = payload.resets.map(annotateResetPlan)
     .flatMap((item) => {
       if (!item || !validDate(item.postedAt) || Date.parse(item.postedAt)>now || !sourceLink(item.url))
         return [];
@@ -29,7 +30,9 @@ export function normalizeFeed(payload, now = Date.now()) {
           resetAt: validDate(item.resetAt)&&Date.parse(item.resetAt)<=now
             ? new Date(item.resetAt).toISOString()
             : null,
-          type: ["automatic", "banked"].includes(item.resetType)
+          scheduledAt:validDate(item.scheduledAt)?item.scheduledAt:null,
+          category:item.category,
+          type: item.category==='schedule'?'scheduled':["automatic", "banked"].includes(item.resetType)
             ? item.resetType
             : "unknown",
           resetTypes: [...new Set((Array.isArray(item.resetTypes)?item.resetTypes:[item.resetType]).filter(type=>['automatic','banked'].includes(type)))],
@@ -52,7 +55,7 @@ export function normalizeFeed(payload, now = Date.now()) {
     .sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt));
   return {
     records,
-    posts: Array.isArray(payload.posts) ? normalizeFeed({resets:payload.posts},now).records.map(r=>({...r,type:payload.posts.find(p=>p.id===r.id||p.url===r.url)?.category==='forecast'?'forecastSignal':payload.posts.find(p=>p.id===r.id||p.url===r.url)?.category==='reset'?r.type:'post'})) : [...records,...(Array.isArray(payload.signals)&&payload.signals.length?normalizeFeed({resets:payload.signals},now).records.map(r=>({...r,type:'forecastSignal'})):[])].sort((a,b)=>Date.parse(b.postedAt)-Date.parse(a.postedAt)),
+    posts: Array.isArray(payload.posts) ? normalizeFeed({resets:payload.posts},now).records.map(r=>({...r,type:r.category==='schedule'?'scheduled':r.category==='forecast'?'forecastSignal':r.category==='reset'?r.type:'post'})) : [...records,...(Array.isArray(payload.signals)&&payload.signals.length?normalizeFeed({resets:payload.signals},now).records.map(r=>({...r,type:'forecastSignal'})):[])].sort((a,b)=>Date.parse(b.postedAt)-Date.parse(a.postedAt)),
     generatedAt: validDate(payload.generatedAt) ? payload.generatedAt : null,
     lastPolledAt: validDate(payload.lastPolledAt) ? payload.lastPolledAt : null,
     forecast: payload.forecast || null,

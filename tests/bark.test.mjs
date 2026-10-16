@@ -50,6 +50,29 @@ test('first successful source check baselines history; new resets and threshold 
  assert.equal((await barkStatus(e)).receipts.filter(r=>r.state==='sent').length,2);
 });
 
+test('a corrected cancellation blocks a generic reset retry queued before plan support',async()=>{
+ const e=env();await runBark(e,feed(),{now});let attempts=0;
+ const send=async()=>{attempts++;return {state:'retry',code:'provider_429'};};
+ await runBark(e,feed([post('200')]),{now:now+1000,send});
+ assert.equal(attempts,1);
+ const cancelled={...post('200'),textStatus:'verified',original:'We have cancelled the reset.'};
+ await runBark(e,feed([cancelled]),{now:now+130000,send});
+ assert.equal(attempts,1);
+ assert.equal((await barkStatus(e)).receipts[0].state,'cancelled');
+});
+
+test('a revised announced target cancels the old retry and sends the new plan only once',async()=>{
+ const e=env();await runBark(e,feed(),{now});const sent=[];
+ const planned={...post('200'),textStatus:'verified',original:'We will reset in 5 hours.'};
+ const send=async job=>{sent.push(job);return sent.length===1?{state:'retry',code:'provider_429'}:{state:'sent',code:'accepted'};};
+ await runBark(e,feed([planned]),{now:now+1000,send});
+ const revised={...planned,original:'We will reset in 6 hours.'};
+ await runBark(e,feed([revised]),{now:now+130000,send});
+ await runBark(e,feed([revised]),{now:now+140000,send});
+ assert.equal(sent.length,2);assert.equal(sent[1].event.scheduledAt,iso(now+6*3600000));
+ assert.deepEqual((await barkStatus(e)).receipts.map(r=>r.state).sort(),['cancelled','sent']);
+});
+
 test('large history baselines stay within the free D1 statement budget',async()=>{
  const e=env();await runBark(e,feed(Array.from({length:500},(_,i)=>post(String(i+1000)))),{now});
  assert.equal(e.NOTIFY_DB.sql.prepare('SELECT count(*) AS n FROM bark_events').get().n,500);

@@ -1,5 +1,6 @@
 import {load} from 'cheerio';
 import {BUILDERS_FEED,parseBuilderFeed} from './tweets.mjs';
+import {annotateResetPlan} from '../src/lib/reset-plan.mjs';
 
 export const RADAR = 'https://codex-reset.aiplanwatch.com';
 export const TOKEN = 'https://tokenusage.dev/api/resets';
@@ -101,7 +102,7 @@ export function mergeRecords(...groups) {
   const translation=record.original===original&&record.translation?record.translation:previous.original===original?previous.translation||'':'';
   map.set(record.id,{...previous,...record,resetType:record.resetType==='unknown'?previous.resetType:record.resetType,category,original,translation,textStatus:prefer?record.textStatus:previous.textStatus,textSource:prefer?record.textSource:previous.textSource,postedAt:previous.timeBasis==='api'?previous.postedAt:record.postedAt,timeBasis:previous.timeBasis==='api'?'api':record.timeBasis,detectedAt:record.detectedAt||previous.detectedAt});
  }
- return [...map.values()].map(record=>postId(record.url)===record.id&&reviewedAnnouncements[record.id]?{...record,...reviewedAnnouncements[record.id],classificationBasis:'reviewed-original'}:record);
+ return [...map.values()].map(record=>annotateResetPlan(postId(record.url)===record.id&&reviewedAnnouncements[record.id]?{...record,...reviewedAnnouncements[record.id],classificationBasis:'reviewed-original'}:record));
 }
 export async function fetchText(url,{fetcher=fetch,headers={}}={}) {
  const response=await fetcher(url,{headers:{'User-Agent':'PulseRadar/0.2 (public-source-monitor)',...headers},signal:AbortSignal.timeout(15000),redirect:'manual'});

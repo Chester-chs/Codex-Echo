@@ -1,5 +1,6 @@
 export const messages = {
   zh: {
+    scheduled:'重置计划',
     siteName: 'Codex 回响',
     barkTitle: 'Bark · iPhone 锁屏提醒',
     barkHelp: '已绑定设备由云端推送，锁屏或关闭网页后也可接收。实际显示受手机通知设置和网络影响。',
@@ -212,6 +213,7 @@ export const messages = {
     feedCount: "当前来源",
   },
   en: {
+    scheduled:'Planned reset',
     siteName: 'Codex Echo',
     barkTitle: 'Bark · iPhone Lock Screen alerts',
     barkHelp: 'The cloud sends to the bound device even when the screen is locked or this website is closed. Display depends on device notification settings and network access.',

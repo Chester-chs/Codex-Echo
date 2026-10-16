@@ -1,5 +1,6 @@
 import {parseBarkKey,digest,sendBark,barkSettings,ready,forecastKey} from './bark.mjs';
 import {getForecast} from '../src/lib/domain.mjs';
+import {annotateResetPlan,isCurrentPlanNotice,resetNoticeKey} from '../src/lib/reset-plan.mjs';
 
 const BASE='/api/bark/subscription',LOCK='visitor-dispatch:v1',LEASE=180000,DAY=86400000;
 const ORIGINS=new Set(['https://echo-radar.pages.dev','https://pulse-radar.fuzzy-badge-7763.chatgpt.site','http://127.0.0.1:4174','http://127.0.0.1:5173','http://127.0.0.1:5174']);
@@ -128,7 +129,7 @@ export async function handleVisitorRequest(request,env,{now=Date.now(),fetcher=f
 }
 
 function compact(event){
- const out={};for(const k of ['id','resetType','resetTypes','original','translation','postedAt','resetAt','probability','kind','basis','basisZh','windowText','publishedAt','checkedAt','sourceFreshUntil','validUntil','sourceUrl'])if(event[k]!==undefined)out[k]=event[k];
+ const out={};for(const k of ['id','url','category','textStatus','scheduledAt','resetType','resetTypes','original','translation','postedAt','resetAt','probability','kind','basis','basisZh','windowText','publishedAt','checkedAt','sourceFreshUntil','validUntil','sourceUrl'])if(event[k]!==undefined)out[k]=event[k];
  for(const k of ['original','translation','basis','basisZh','windowText'])if(out[k])out[k]=Array.from(out[k]).slice(0,1000).join('');return out;
 }
 export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
@@ -150,9 +151,9 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
   await db.prepare(`UPDATE bark_events SET state='unknown',code='interrupted',updated=? WHERE state='sending' AND recipient IN(SELECT device_hash FROM bark_subscriptions) AND ${fence}`).bind(n,LOCK,token,n).run();
   const fresh=ready(state,n),forecast=getForecast(state?.forecast,n),currentKey=forecast?await forecastKey(forecast):null;
   if(fresh){
-   const resets=(state?.records||[]).filter(r=>r.category==='reset'&&['automatic','banked'].includes(r.resetType)&&/^\d+$/.test(r.id)&&/^https:\/\/(?:x\.com|twitter\.com)\/(?:thsottiaux|i)\/status\/\d+$/.test(r.url)&&Date.parse(r.postedAt)<=n&&n-Date.parse(r.postedAt)<21600000).slice(0,1000).map(r=>({posted:Date.parse(r.postedAt),event:compact(r)}));
+   const resets=(state?.records||[]).map(annotateResetPlan).filter(r=>['reset','schedule'].includes(r.category)&&['automatic','banked'].includes(r.resetType)&&/^\d+$/.test(r.id)&&/^https:\/\/(?:x\.com|twitter\.com)\/(?:thsottiaux|i)\/status\/\d+$/.test(r.url)&&Date.parse(r.postedAt)<=n&&n-Date.parse(r.postedAt)<21600000).slice(0,1000).map(r=>({posted:Date.parse(r.postedAt),event:{...compact(r),noticeKey:resetNoticeKey(r)}}));
    for(let i=0;i<resets.length;i+=100)await db.prepare(`INSERT OR IGNORE INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated)
-    SELECT s.device_hash,'reset:'||json_extract(r.value,'$.event.id'),'reset',json_extract(r.value,'$.event'),'pending',?,?,? FROM json_each(?) r JOIN bark_subscriptions s JOIN bark_control c ON c.id=s.device_hash WHERE s.reset_alerts=1 AND json_extract(r.value,'$.posted')>=c.baseline_at`).bind(n,n,n,JSON.stringify(resets.slice(i,i+100))).run();
+    SELECT s.device_hash,json_extract(r.value,'$.event.noticeKey'),'reset',json_extract(r.value,'$.event'),'pending',?,?,? FROM json_each(?) r JOIN bark_subscriptions s JOIN bark_control c ON c.id=s.device_hash WHERE s.reset_alerts=1 AND json_extract(r.value,'$.posted')>=c.baseline_at`).bind(n,n,n,JSON.stringify(resets.slice(i,i+100))).run();
    if(forecast)await db.prepare(`INSERT INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated)
     SELECT s.device_hash,?,'forecast',?,'pending',?,?,? FROM bark_subscriptions s JOIN bark_control c ON c.id=s.device_hash WHERE s.forecast_alerts=1 AND s.threshold<=? AND c.baseline_at<=?
     ON CONFLICT(recipient,event_key) DO UPDATE SET state='pending',available=excluded.available,updated=excluded.updated,payload=excluded.payload WHERE bark_events.state='cancelled' AND bark_events.attempts<3 AND bark_events.code IN('disabled_or_expired','expired_before_dispatch')`).bind(currentKey,JSON.stringify(compact(forecast)),n,n,n,forecast.probability,Date.parse(forecast.publishedAt)).run();
@@ -161,7 +162,7 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
   const rows=(await db.prepare(`WITH ranked AS(SELECT e.*,s.device_cipher,s.token_hash,s.revision,s.reset_alerts,s.forecast_alerts,s.threshold,s.language,s.last_served,ROW_NUMBER() OVER(PARTITION BY e.recipient ORDER BY CASE e.kind WHEN 'test' THEN 0 ELSE 1 END,e.created) AS rank
    FROM bark_events e JOIN bark_subscriptions s ON s.device_hash=e.recipient WHERE e.state IN('pending','retry') AND e.available<=? AND COALESCE((SELECT attempts FROM bark_daily WHERE recipient=e.recipient AND day=?),0)<20)
    SELECT * FROM ranked WHERE rank=1 ORDER BY CASE kind WHEN 'test' THEN 0 ELSE 1 END,last_served,created,recipient LIMIT 20`).bind(n,day).all()).results;
-  const eligible=(r,time)=>r.kind==='test'?time-r.created<900000:ready(state,time)&&(r.kind==='reset'?r.reset_alerts&&time-Date.parse(r.event.postedAt)<21600000:r.forecast_alerts&&r.event_key===currentKey&&forecast&&forecast.probability>=r.threshold&&getForecast(forecast,time));
+  const eligible=(r,time)=>r.kind==='test'?time-r.created<900000:ready(state,time)&&(r.kind==='reset'?r.reset_alerts&&time-Date.parse(r.event.postedAt)<21600000&&isCurrentPlanNotice(r.event,state.records||[],time):r.forecast_alerts&&r.event_key===currentKey&&forecast&&forecast.probability>=r.threshold&&getForecast(forecast,time));
   for(const r of rows)r.event=JSON.parse(r.payload);
   const invalid=rows.filter(r=>!eligible(r,clock())).map(r=>({id:r.recipient,key:r.event_key,attempts:r.attempts}));
   if(invalid.length)await db.prepare(`UPDATE bark_events SET state='cancelled',code='disabled_or_expired',updated=? WHERE state IN('pending','retry') AND EXISTS(SELECT 1 FROM json_each(?) j WHERE json_extract(j.value,'$.id')=recipient AND json_extract(j.value,'$.key')=event_key AND json_extract(j.value,'$.attempts')=attempts) AND ${fence}`).bind(clock(),JSON.stringify(invalid),LOCK,token,clock()).run();

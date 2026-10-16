@@ -20,7 +20,7 @@ defineEmits(['detail']);
 const zh=computed(()=>props.language==='zh');
 const filter=ref('all'),query=ref(''),limit=ref(6);
 const filters=computed(()=>[{key:'all',label:zh.value?'全部推文':'All posts'},{key:'reset',label:zh.value?'重置公告':'Resets'},{key:'forecastSignal',label:zh.value?'预测线索':'Forecasts'},{key:'post',label:zh.value?'其他动态':'Other posts'}]);
-const label=type=>({automatic:zh.value?'全局重置':'Global reset',banked:zh.value?'重置券':'Reset credit',unknown:zh.value?'重置公告':'Reset post',forecastSignal:zh.value?'预测线索':'Forecast signal',post:zh.value?'普通动态':'General update',mixed:zh.value?'全局重置 + 重置券':'Global + reset credit'})[type];
-const filtered=computed(()=>filterRecords(props.posts.map(r=>({...r,translation:displayText(r,'zh')})).filter(r=>filter.value==='all'||(filter.value==='reset'?['automatic','banked','unknown'].includes(r.type):r.type===filter.value)),'all',query.value,props.zone));
+const label=type=>({scheduled:zh.value?'重置计划':'Planned reset',automatic:zh.value?'全局重置':'Global reset',banked:zh.value?'重置券':'Reset credit',unknown:zh.value?'重置公告':'Reset post',forecastSignal:zh.value?'预测线索':'Forecast signal',post:zh.value?'普通动态':'General update',mixed:zh.value?'全局重置 + 重置券':'Global + reset credit'})[type];
+const filtered=computed(()=>filterRecords(props.posts.map(r=>({...r,translation:displayText(r,'zh')})).filter(r=>filter.value==='all'||(filter.value==='reset'?['scheduled','automatic','banked','unknown'].includes(r.type):r.type===filter.value)),'all',query.value,props.zone));
 watch([filter,query],()=>{limit.value=6;});
 </script>

@@ -85,7 +85,7 @@ export async function fetchPublicFeed(fetcher=fetch) {
  const text=await response.text();if(Buffer.byteLength(text)>3000000)throw new Error('Public feed is too large');
  const data=JSON.parse(text);
  if(!Array.isArray(data.resets)||!Array.isArray(data.sources))throw new Error('Invalid public feed');
- return {records:data.resets,forecast:data.forecast,sources:data.sources};
+ return {records:Array.isArray(data.posts)?data.posts:data.resets,forecast:data.forecast,sources:data.sources};
 }
 
 async function main() {

@@ -87,3 +87,5 @@ The test is not a reset or forecast announcement. Once verified, leave cloud ale
 The current shared free trial supports 30 devices and 20 send attempts per device per UTC date, including tests/retries. Sources update about every ten minutes; notification dispatch runs each minute. This is not instant delivery. Upstreams, Bark, networks and phone settings affect receipt.
 
 **Use Bark for closed-page alerts. Page notifications require the page to keep running.** Running your own program is optional; see the separate [GitHub setup guide](GITHUB_BARK.en.md) if desired.
+
+The Reset announcements switch also includes newly announced precise reset plans. These messages say Planned reset announced and do not confirm completion. No reconnection is needed; the forecast threshold does not apply to plans.
