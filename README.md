@@ -8,23 +8,33 @@
 
 ## 网页预览
 
-以下为公开网页的实际截图；日期、数量和预测值只是截图时的快照，以网页当前显示为准。
+截图统一使用英文界面。以下为公开网页的实际截图；日期、数量和预测值只是截图时的快照，以网页当前显示为准。
 
-![Codex 回响桌面网页：最近公告、预测和历史统计](docs/images/desktop-zh.png)
+![Codex 回响桌面网页：最近公告、预测和历史统计](docs/images/desktop-en.png)
 
 <details>
 <summary>查看手机端</summary>
 
-<img src="docs/images/mobile-zh.png" alt="Codex 回响手机端实际截图" width="390" />
+<img src="docs/images/mobile-en.png" alt="Codex 回响手机端实际截图" width="390" />
 
 </details>
 
 <details>
-<summary>查看重置计划状态示例（模拟数据）</summary>
+<summary>查看计划公布 → 等待确认 → 确认完成（英文模拟截图）</summary>
 
 **这是本地模拟效果，不是真实重置预告，也不表示目前确定五小时后重置。** 来源明确公布计划后，首页会显示倒计时，并保留最近一次公告。
 
-![已公布重置计划的模拟效果，非真实公告](docs/images/reset-plan-example.png)
+**1. 公布计划：**显示倒计时，计划不计入历史公告统计。
+
+![英文模拟：计划已公布](docs/images/reset-plan-example.png)
+
+**2. 到点等待确认：**没有完成公告时，不自动宣告完成，也不发送完成提醒。
+
+![英文模拟：到点后等待完成确认](docs/images/reset-awaiting-example.png)
+
+**3. 来源确认完成：**收到明确完成消息后更新状态，并单独提醒一次。图中的新增公告只存在于本地模拟，不属于线上真实数据。
+
+![英文模拟：来源明确确认完成](docs/images/reset-completed-example.png)
 
 </details>
 

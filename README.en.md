@@ -20,11 +20,21 @@ These are screenshots of the public website. Dates, counts and forecasts are sna
 </details>
 
 <details>
-<summary>View an announced-plan example (synthetic data)</summary>
+<summary>View the lifecycle: announced → awaiting → completed (synthetic data)</summary>
 
-**This is a local simulation, not a real announcement or a claim that a reset is currently five hours away.** A precise source announcement activates the countdown alongside the latest historical post. This example shows the Chinese interface.
+**This is a local simulation, not a real announcement or a claim that a reset is currently five hours away.** A precise source announcement activates the countdown alongside the latest historical post. All screenshots use the English interface; the clock is accelerated and production data is unchanged.
 
-![Synthetic announced reset plan example, not a real announcement](docs/images/reset-plan-example.png)
+**1. Plan announced:** the countdown appears; the plan is excluded from historical announcement counts.
+
+![Synthetic example: plan announced](docs/images/reset-plan-example.png)
+
+**2. Awaiting confirmation:** reaching the target does not confirm completion or send a completion alert.
+
+![Synthetic example: target reached, awaiting confirmation](docs/images/reset-awaiting-example.png)
+
+**3. Source reported completion:** a new explicit completion updates the card and triggers a separate alert. The extra historical entry exists only in this local simulation.
+
+![Synthetic example: source explicitly confirmed completion](docs/images/reset-completed-example.png)
 
 </details>
 
