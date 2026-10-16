@@ -1140,7 +1140,7 @@ watch(
   (language) => {
     // #ifdef H5
     document.documentElement.lang = language === "zh" ? "zh-CN" : "en";
-    document.title = language === "zh" ? "回响 · Codex 雷达" : "Echo · Codex Radar";
+    document.title = language === "zh" ? "Codex 回响 · 重置公告与 Bark 提醒" : "Codex Echo · Reset Radar & Bark Alerts";
     clientTranslator.apply(feed.value,language);
     // #endif
   },

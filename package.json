@@ -3,12 +3,9 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
-    "package:weixin": "npm run build:weixin && node scripts/prepare-weixin.mjs",
-    "check:release": "node scripts/check-release.mjs",
     "server": "node --env-file-if-exists=backend/.env backend/server.mjs",
     "dev": "uni --host 127.0.0.1 --port 5173",
     "build": "uni build",
-    "build:weixin": "uni build -p mp-weixin",
     "test": "node --test tests/*.test.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 4173"
   },

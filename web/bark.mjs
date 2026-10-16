@@ -32,21 +32,21 @@ export function formatBark(job,{language='zh'}={}) {
  const url=new URL(SITE);
  let title,body;
  if(job.kind==='test'){
-  title=zh?'回响 · 锁屏推送测试':'Echo · Push test';
+  title=zh?'Codex 回响 · 锁屏推送测试':'Codex Echo · Push test';
   body=zh?'这是一条测试通知，不代表发生重置或出现新的预测。\n\n通知由云端发送，关闭网页和电脑后仍可运行。请确认 iPhone 锁屏时能看到这条消息，点击可打开回响网页。':'This is a test, not a reset announcement or a new forecast.\n\nSent by the cloud service, independently of the website and your computer. Please check this message on your iPhone Lock Screen. Tap to open Echo.';
  }else if(job.kind==='reset'){
   const type=e.resetTypes?.length>1?(zh?'全局重置 + 重置券':'Global + reset credit'):e.resetType==='banked'?(zh?'重置券公告':'Reset credit announcement'):(zh?'全局重置公告':'Global reset announcement');
-  title=(zh?'回响 · ':'Echo · ')+type;
+  title=(zh?'Codex 回响 · ':'Codex Echo · ')+type;
   const quote=clip(zh?chineseText(e.original,e.translation):e.original);
   body=zh?`消息原话（中文译文）\n${quote}\n\n实际重置时间\n${e.resetAt?bothTimes(e.resetAt,true):'未说明，无法确定'}\n\n说明\n公开公告不代表你的账号额度已恢复，请以账号显示为准。\n\n发帖时间\n${bothTimes(e.postedAt,true)}\n\n来源：Tibo · @thsottiaux。点通知查看完整推文与出处。`:`Original announcement\n${quote}\n\nActual reset time\n${e.resetAt?bothTimes(e.resetAt,false):'Not stated; cannot be determined.'}\n\nA public announcement does not confirm your account allowance has recovered.\n\nPublished\n${bothTimes(e.postedAt,false)}\n\nSource: Tibo · @thsottiaux. Tap for the full post and source.`;
   url.hash='/pages/index/index?record='+encodeURIComponent(e.id);
  }else{
-  title=zh?`回响 · 来源预测 ${e.probability}%`:`Echo · Source estimate ${e.probability}%`;
+  title=zh?`Codex 回响 · 来源预测 ${e.probability}%`:`Codex Echo · Source estimate ${e.probability}%`;
   const basis=clip(zh?chineseText(e.basis,e.basisZh):e.basis),window=clip(zh?localizedWindow(e.windowText,'zh'):e.windowText||'See source',300);
   body=zh?`来源预测：${e.probability}%\n这是 AIPlanWatch 的来源判断，非官方承诺，也不是 Tibo 本人给出的概率。\n\n来源依据\n${basis}\n\n来源时间描述\n${window}（以来源记录时刻为起点）\n\n来源记录于\n${bothTimes(e.publishedAt,true)}\n\n有效期至\n${bothTimes(e.validUntil,true)}\n\n点通知查看当前预测与完整出处。`:`Source estimate: ${e.probability}%\nAn AIPlanWatch assessment, not an official promise or a probability stated by Tibo.\n\nBasis\n${basis}\n\nSource window\n${window} (from the source record time)\n\nSource recorded\n${bothTimes(e.publishedAt,false)}\n\nValid until\n${bothTimes(e.validUntil,false)}\n\nTap for the current assessment and full source.`;
   url.hash='/pages/index/index?forecast=1';
  }
- return {title,body,group:zh?'回响雷达':'Echo Radar',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};
+ return {title,body,group:zh?'Codex 回响':'Codex Echo',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};
 }
 export async function sendBark(job,env,{fetcher=fetch}={}) {
  let response,data;

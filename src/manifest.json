@@ -1,5 +1,5 @@
 {
-  "name": "Echo Codex Radar",
+  "name": "Codex Echo Radar",
   "appid": "",
   "description": "Bilingual public Codex reset signal radar",
   "versionName": "0.2.0",
@@ -7,7 +7,7 @@
   "transformPx": false,
   "vueVersion": "3",
   "uniStatistics": { "enable": false },
-  "h5": { "title": "Echo · Codex Radar", "router": { "mode": "hash" } },
+  "h5": { "title": "Codex Echo · Reset Radar & Bark Alerts", "router": { "mode": "hash" } },
   "mp-weixin": {
     "appid": "",
     "setting": { "urlCheck": true },

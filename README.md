@@ -1,53 +1,88 @@
-# 回响 · Echo
+# Codex 回响 · Codex Echo
 
-一个简洁的中英文 Codex 公告观察站：最近重置公告、日历、Tibo 已收录推文、来源预测，以及可关闭网页运行的 Bark 手机提醒。
+**简体中文** | [English](README.en.md)
 
-**[打开网页](https://echo-radar.pages.dev/) · [给朋友的 Bark 配置教程](docs/GITHUB_BARK.md)**
+一个简洁的 **Codex 重置公告与预测雷达**：最近一次重置公告、历史日历、Tibo 已收录推文，以及 **Bark iPhone 锁屏提醒**。
 
-## 最简单的用法
+**[打开网页](https://echo-radar.pages.dev/) · [iPhone 接入 Bark 教程](docs/BARK_SETUP.md)**
 
-安装 iPhone 的 [Bark](https://github.com/Finb/Bark)，在网页的「手机云端提醒」绑定自己的推送地址。无需 GitHub 账号，可以分别设置重置/预测提醒、阈值、推送语言，也能退订。网页当前免费试运行限 30 台设备；少量朋友使用无需购买服务器。
+## 推荐：网页绑定 Bark
 
-## 自己用 GitHub 接收提醒
+1. iPhone 安装 **Bark**，允许锁屏通知。
+2. 复制 Bark 应用中的推送地址。
+3. 打开网页，向下滑到 **「手机云端提醒」**，粘贴地址，选择提醒类型、阈值和语言，点击 **「绑定并保存」**。
+4. 点击 **「发送测试通知」**，关闭网页并锁屏，确认手机收到。
 
-点击 **Use this template → Create a new repository**，只复制默认分支，在自己的公开仓库添加 **Secret** `BARK_DEVICE_KEY`，粘贴自己的 Bark 地址。打开 Actions，启用 **Personal Bark alerts**，手动运行并勾选测试通知。
+无需 GitHub 账号、下载代码或购买服务器。完整教程包含每步入口、填写示例、保存与退订方法，以及“Bark 有记录但锁屏没显示”的排查。
 
-可用 Variables 自定义 `BARK_RESET_ALERTS`、`BARK_FORECAST_ALERTS`、`BARK_THRESHOLD`（40–90，步长 5）、`BARK_LANGUAGE`（zh/en）、`BARK_DAILY_LIMIT`（1–20）和 `BARK_ENABLED`。详细操作路径和故障排查见 **[配置教程](docs/GITHUB_BARK.md)**。
+| 提醒方式 | 使用要求 |
+|---|---|
+| **Bark 云端提醒（推荐）** | 绑定自己的 Bark 后，关闭网页仍可由云端发送；手机需允许通知 |
+| 页面提醒 | **必须保持页面开启并运行**；关闭页面后停止，切后台或锁屏也可能暂停 |
 
-- 不需安装项目到自己的电脑，也不需填写 Cloudflare 凭据或申请 GitHub 个人令牌；由仓库工作流每 10 分钟读取回响的公开数据并发送到自己的 Bark。
-- 首次运行建立基线，不补发历史；发送前先持久化去重状态，结果不明不自动重发。状态保存在自己的 `echo-notifier-state` 分支，密钥只在 GitHub Secret 中。
-- 网页与 GitHub 两种通道建议二选一，避免同一手机重复收到通知。仅查看或复制代码不会自动订阅。
-- 公开仓库标准 Actions 运行时间目前免费；平台可能延迟调度，仓库连续 60 天无活动会停用定时任务。不承诺永久免费或实时送达。
+两处设置相互独立。想关闭网页后收提醒，请使用 Bark。当前网页免费试运行最多 30 台设备，每台每天最多 20 次发送尝试，几位朋友使用不需要扩容。
 
-## 开发与源码
+<details>
+<summary>可选：自己在 GitHub 运行 Bark 提醒程序</summary>
 
-需要 Node.js 24+。本仓库保留 Vue 3 / uni-app 网页、可选微信工程、自托管 Node 后端、Cloudflare Worker 和测试。它们是不同运行方式，使用 GitHub 提醒不需要全部部署。
+## GitHub 自助版：只需一个必填配置
 
-~~~sh
+1. 登录 GitHub，点击本页上方 **Use this template → Create a new repository**，在自己的账号创建公开仓库，只复制默认分支。
+2. 在自己的仓库打开 **Settings → Secrets and variables → Actions → Secrets → New repository secret**。
+3. Name 填 `BARK_DEVICE_KEY`，Secret 粘贴从 Bark 复制的推送地址，点击 **Add secret**。
+4. 打开 **Actions → Personal Bark alerts → Run workflow**，勾选测试通知后运行，在 iPhone 锁屏确认收到。
+
+**[GitHub 自助配置详细教程](docs/GITHUB_BARK.md)** 包含逐步点击路径、填写示例、完成标志和排错方法。它独立执行个人推送，不占用网页订阅名额。同一手机建议二选一，避免重复提醒。
+
+默认开启重置和预测提醒，预测阈值 60%，中文推送。需要修改时，在自己仓库的 **Variables** 添加：
+
+| 名称 | 作用 | 默认值 |
+|---|---|---|
+| `BARK_RESET_ALERTS` | 重置公告：`true` 开 / `false` 关 | `true` |
+| `BARK_FORECAST_ALERTS` | 来源预测：`true` 开 / `false` 关 | `true` |
+| `BARK_THRESHOLD` | 40–90，每档 5，不带 `%` | `60` |
+| `BARK_LANGUAGE` | `zh` 中文 / `en` 英文 | `zh` |
+| `BARK_DAILY_LIMIT` | 每个 UTC 日期最多尝试次数，1–20 | `20` |
+| `BARK_ENABLED` | 总开关，`false` 暂停 | `true` |
+
+</details>
+
+## 功能与运行
+
+- 单页查看最近公告、按发布日期标记的日历、统计、推文全文与出处；页面和推送支持中英文。
+- GitHub 工作流计划每 10 分钟读取共享公开数据，首次建立基线，不补发旧消息。
+- 密钥只填 GitHub **Secret**；状态分支不保存原始密钥。发送前保存去重状态，结果不明不盲目重发。
+- 手机推送只使用 **Bark**，无需其他消息服务；没有符合条件的新消息时保持安静。
+
+公开仓库使用标准 GitHub 托管运行器的运行时间目前免费；调度可能延迟，公开仓库连续 60 天没有活动会自动停用定时任务。[费用说明](https://docs.github.com/en/billing/concepts/product-billing/github-actions) · [调度限制](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule)
+
+## 数据说明
+
+公告条数不是你的账号额度或实际重置次数，发布时间不一定是完成时间。概率来自 AIPlanWatch 的公开来源评估，不是 OpenAI 官方承诺。免费公开来源收录的推文可能存在遗漏。
+
+来源包括 [AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。GitHub 自助版独立执行个人推送，仍读取本项目共享的公开数据服务。各平台额度和可用性可能变化。
+
+<details>
+<summary>开发者：源码与本地构建</summary>
+
+普通订阅者可以跳过。网页基于 Vue 3 / uni-app，推送服务使用 Cloudflare Workers 和 Bark。开发需要 Node.js 24+：
+
+```sh
 npm ci
 npm test
 npm run build
-~~~
+```
 
-构建网页输出在 `dist/build/h5/`。本地开发先运行 `npm run server`，另开终端运行 `npm run dev`。微信接入见 [INTEGRATION.md](docs/INTEGRATION.md)，需要自己的 AppID 和模板，尚未完成微信真机验收。
-
-如自行部署 Worker，复制 `web/wrangler.example.jsonc` 为忽略提交的 `web/wrangler.jsonc`，填自己的 KV / D1 标识并应用 `web/migrations/`。不要使用别人的资源 ID 或把凭据写入前端。
+网页输出在 `dist/build/h5/`。本地开发先运行 `npm run server`，另开终端运行 `npm run dev`。自行部署 Worker 时，复制 `web/wrangler.example.jsonc` 为 `web/wrangler.jsonc`，填写自己的 KV / D1 标识，应用 `web/migrations/` 并单独配置生产密钥。
 
 | 目录 | 用途 |
 |---|---|
-| `src/` | 单页界面、中英文、手机适配 |
-| `web/` | 来源缓存 API、Bark 订阅和云端队列 |
-| `scripts/github-notifier.mjs` | 无额外 npm 依赖的个人 GitHub 提醒入口 |
-| `backend/` | Node / SQLite 后端及公开来源采集 |
-| `cloud/` | 可选微信云函数 |
-| `tests/` | 分类、时间、去重、隔离、阈值、推送等测试 |
+| `src/` | 网页、中英文和手机布局 |
+| `web/` | 公开数据 API、Bark 订阅和队列 |
+| `scripts/github-notifier.mjs` | 个人 GitHub Bark 提醒，无额外 npm 依赖 |
+| `backend/` | 来源采集与本地开发服务 |
+| `tests/` | 数据、时间、阈值、去重与推送测试 |
 
-## 信息边界
+使用 Vue、uni-app、Cheerio、Lucide 和 Radix Colors；许可见 `licenses/`。自有代码使用 MIT 许可，上游内容遵循各自许可。与 OpenAI、原雷达作者及 Bark 无隶属关系。
 
-公告条数不是你的账号额度或实际重置次数；帖子发布时间与重置完成时间不同。概率来自 AIPlanWatch 的公开来源评估，不是 OpenAI 官方承诺。推文列表是免费公开来源已收录的内容，可能不完整；保留原文和出处。依赖 [AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。与原作者、Bark 及 OpenAI 无隶属关系。
-
-使用 Vue、uni-app、Cheerio、Lucide 和 Radix Colors；直接分发资源的许可说明见 `licenses/`。本仓库自有代码使用 MIT 许可，上游代码和内容遵循各自许可。
-
-## English
-
-Echo is a bilingual single-page Codex announcement tracker. [Visit the website](https://echo-radar.pages.dev/) or create your own repository from this template to run personal Bark alerts with GitHub Actions. Add your Bark URL as the `BARK_DEVICE_KEY` repository **Secret**, enable **Personal Bark alerts**, and run a manual test. Customize alert types, forecast threshold and notification language using repository Variables. [Setup guide](docs/GITHUB_BARK.md#english-quick-start).
+</details>

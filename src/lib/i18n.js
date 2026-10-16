@@ -1,6 +1,6 @@
 export const messages = {
   zh: {
-    siteName: '回响',
+    siteName: 'Codex 回响',
     barkTitle: 'Bark · iPhone 锁屏提醒',
     barkHelp: '已绑定设备由云端推送，锁屏或关闭网页后也可接收。实际显示受手机通知设置和网络影响。',
     barkDefaults: '云端默认开启重置与预测提醒，预测阈值为 60%。每 10 分钟检查一次，不补发历史公告。',
@@ -14,7 +14,7 @@ export const messages = {
     webMonitoring: '页面提醒已开启',
     webMonitorReady: '在当前页面关注新信号',
     webMonitorHelp: '云端每 10 分钟更新一次来源，页面每 2 分钟检查新数据。开启后，只提示新出现且符合偏好的信号；已有记录不会重复提醒。',
-    webQuietHelp: '页面提醒需要保持网页运行，切到后台可能暂停，关闭页面后停止。上方说明的 Bark 云端通道独立运行。浏览器系统通知需另行授权，部分手机浏览器不支持；本站不发送微信消息。',
+    webQuietHelp: '页面提醒需要保持页面开启并运行，切到后台或锁屏可能暂停，关闭页面后停止。推荐绑定上方的 Bark 云端提醒，关闭网页后仍可向 iPhone 推送；两处设置相互独立。',
     webActivity: '本次页面提醒',
     noWebActivity: '尚无新提醒。开启后保持页面运行即可。',
     browserNotificationUnavailable: '当前浏览器不支持系统通知，仍可使用页面内提醒。',
@@ -212,7 +212,7 @@ export const messages = {
     feedCount: "当前来源",
   },
   en: {
-    siteName: 'Echo',
+    siteName: 'Codex Echo',
     barkTitle: 'Bark · iPhone Lock Screen alerts',
     barkHelp: 'The cloud sends to the bound device even when the screen is locked or this website is closed. Display depends on device notification settings and network access.',
     barkDefaults: 'Cloud defaults: resets and forecasts enabled, 60% forecast threshold. Sources are checked every 10 minutes; historical announcements are not sent.',
@@ -226,7 +226,7 @@ export const messages = {
     webMonitoring: 'Page alerts are on',
     webMonitorReady: 'Follow new signals on this page',
     webMonitorHelp: 'Sources update in the cloud every 10 minutes. This page checks every 2 minutes. Alerts only cover new signals matching your preferences; existing records stay silent.',
-    webQuietHelp: 'Page alerts require this page to stay open and running; background tabs may pause them, and closing it stops them. The Bark cloud channel described above operates independently. Browser notifications need separate permission and are unavailable in some mobile browsers. This site does not send WeChat messages.',
+    webQuietHelp: 'Page alerts require this page to stay open and running. Backgrounding or locking may pause them; closing stops them. Use the Bark cloud alerts above for iPhone notifications with the website closed. The preferences are independent.',
     webActivity: 'Alerts in this session',
     noWebActivity: 'No new alerts yet. Start page alerts and keep this page running.',
     browserNotificationUnavailable: 'System notifications are unavailable here. In-page alerts still work.',

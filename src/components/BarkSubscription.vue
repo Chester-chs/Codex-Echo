@@ -2,7 +2,7 @@
  <details id="bark-cloud-alerts" class="bark-cloud">
   <summary><span><AppIcon name="bell" /><strong>{{ c('title') }}</strong><small>{{ c('tag') }}</small></span><span class="bark-plus">+</span></summary>
   <div class="bark-content">
-   <div class="bark-heading"><div><h3>{{ c('summary') }}</h3><p>{{ c('intro') }}</p></div><span class="bark-badge" :class="{connected:subscription}">{{ subscription?c(active?'bound':'paused'):c('unbound') }}</span></div>
+   <div class="bark-heading"><div><h3>{{ c('summary') }}</h3><p>{{ c('intro') }}</p><p><a :href="'https://github.com/Chester-chs/codex-echo-radar/blob/main/docs/BARK_SETUP'+(language==='zh'?'':'.en')+'.md'" target="_blank" rel="noopener noreferrer">{{ language==='zh'?'iPhone 接入 Bark：完整教程':'Connect Bark on iPhone: setup guide' }}</a></p></div><span class="bark-badge" :class="{connected:subscription}">{{ subscription?c(active?'bound':'paused'):c('unbound') }}</span></div>
    <div v-if="!subscription" class="bark-address"><label for="bark-address">{{ c('address') }}</label><div class="bark-address-input"><component :is="'input'" id="bark-address" class="bark-native-address" :type="reveal?'text':'password'" :value="address" :placeholder="c('placeholder')" autocomplete="off" autocapitalize="off" spellcheck="false" :disabled="busy" :aria-label="c('address')" @input="address=$event.target.value;bindId=''" @keydown.enter="connect" /><WebButton class="base-button" :aria-label="c(reveal?'hide':'show')" @click="reveal=!reveal">{{ c(reveal?'hide':'show') }}</WebButton></div><p>{{ c('privacy') }}</p></div>
    <div v-else class="bark-connected"><span>{{ c('device') }} <b>{{ subscription.deviceHint }}</b></span><span v-if="dirty" class="bark-dirty">{{ c('unsaved') }}</span></div>
    <div class="bark-preferences">
