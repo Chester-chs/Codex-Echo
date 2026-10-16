@@ -1,0 +1,45 @@
+{
+  "name": "echo-radar-api",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-16",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "workers_dev": true,
+  "minify": true,
+  "vars": {
+    "ENABLE_TRANSLATION": "true",
+    "BARK_ENABLED": "false",
+    "BARK_VISITORS_ENABLED": "false",
+    "BARK_VISITOR_CAPACITY": "30",
+    "BARK_RESET_ALERTS": "true",
+    "BARK_FORECAST_ALERTS": "true",
+    "BARK_THRESHOLD": "60",
+    "BARK_LANGUAGE": "zh",
+    "BARK_DAILY_LIMIT": "20"
+  },
+  "triggers": {
+    "crons": [
+      "*/10 * * * *",
+      "* * * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  },
+  "kv_namespaces": [
+    {
+      "binding": "RADAR",
+      "id": "YOUR_KV_NAMESPACE_ID"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "NOTIFY_DB",
+      "database_name": "echo-radar-notifications",
+      "database_id": "YOUR_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

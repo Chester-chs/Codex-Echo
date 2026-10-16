@@ -1,0 +1,37 @@
+body,uni-page-body,.app-shell{background:var(--slate-2);color:var(--slate-12)}
+.app-shell .modal{background:#fff;color:var(--slate-12)}
+.app-shell .primary-button{background:var(--indigo-9)}
+.app-shell .choice-group .selected{background:var(--indigo-3);color:var(--indigo-11);border-color:var(--indigo-6)}
+.app-shell .quote-block{background:var(--slate-2);color:var(--slate-12);border-color:var(--slate-6)}
+.app-shell .translation-block{background:var(--indigo-2);border:1px solid var(--indigo-4);border-radius:10px;padding:16px;line-height:1.9;color:var(--slate-12);white-space:pre-wrap}
+.translation-caption{display:block;margin-top:12px;color:var(--slate-11);font-size:10px}
+.original-disclosure{margin:15px 0;color:var(--slate-11);font-size:12px}
+.original-disclosure summary{cursor:pointer;padding:10px 0}
+.original-disclosure .quote-block{font-size:12px}
+.pulse-page .app-icon{filter:grayscale(1)}
+.pulse-notification-content .threshold-value,.app-shell .text-button{color:var(--indigo-11)}
+.pulse-notification-content .range-labels{color:var(--slate-11)}
+.pulse-window-anchor{font-size:10px;line-height:1.7;color:var(--slate-11);margin-top:7px!important}
+.pulse-forecast-links{display:flex;flex-wrap:wrap;gap:10px 20px;margin-top:15px}
+.pulse-forecast-links .pulse-link{margin-top:0}
+.notification-guide{display:block;font-size:11px;color:var(--slate-11);line-height:1.9;margin-top:13px}
+.app-shell .field-label,.app-shell .muted,.app-shell .local-save{color:var(--slate-11)}
+.app-shell .how-card,.app-shell .forecast-method,.app-shell .source-quality{background:var(--slate-3);color:var(--slate-11);border-color:var(--slate-6)}
+.app-shell .detail-fields,.app-shell .soft-divider,.app-shell .preference-row{border-color:var(--slate-6)}
+.app-shell .detail-fields>uni-view>uni-text,.app-shell .source-health-list>uni-view{color:var(--slate-11)}
+.app-shell .detail-fields>uni-view>uni-text:last-child{color:var(--slate-12)}
+.app-shell .modal-scroll{overscroll-behavior:contain}
+.bark-channel-note{display:flex;gap:12px;padding:17px 19px;margin:0 0 18px;border:1px solid var(--indigo-5);border-radius:10px;background:var(--indigo-2);color:var(--slate-12)}
+.bark-channel-note>.app-icon{flex-shrink:0;color:var(--indigo-11);margin-top:3px}
+.bark-channel-note .card-description{display:block;line-height:1.8;margin-top:8px;color:var(--slate-11)}
+.app-shell .authorization .text-button{display:flex;justify-content:center;width:100%;margin-top:10px;font-size:11px;line-height:1.8}
+@media(max-width:680px){
+ .pulse-forecast-value{grid-row:1/5}
+ .pulse-window-anchor,.pulse-forecast-links{grid-column:1/-1}
+ .pulse-forecast-value .pulse-provider{display:block;font-size:9px;line-height:1.5;max-width:115px}
+ .pulse-notification-content .range-labels{font-size:10px}
+ .notification-guide{font-size:11px}
+ .pulse-page .pulse-stats-note{font-size:10px}
+ .app-shell .source-health-list>uni-view{flex-wrap:wrap;gap:4px}
+ .app-shell .choice-group{flex-wrap:wrap}
+}

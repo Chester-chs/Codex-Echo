@@ -1,0 +1,33 @@
+services:
+  api:
+    build:
+      context: .
+      target: api
+    env_file: backend/.env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8787
+      RADAR_DB_PATH: /app/data/radar.sqlite
+    volumes:
+      - radar-data:/app/data
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      target: web
+    environment:
+      RADAR_DOMAIN: ${RADAR_DOMAIN:-localhost}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+volumes:
+  radar-data:
+  caddy-data:
+  caddy-config:

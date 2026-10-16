@@ -1,0 +1,7 @@
+{
+  "name": "pulse-radar-cloud",
+  "version": "0.2.0",
+  "private": true,
+  "dependencies": { "wx-server-sdk": "4.0.2", "cheerio": "1.2.0" },
+  "overrides": { "axios": "0.34.0", "lodash.unset": "4.18.0" }
+}

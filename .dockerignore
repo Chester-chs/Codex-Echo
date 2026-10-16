@@ -1,0 +1,11 @@
+node_modules
+dist
+artifacts
+data
+.cache
+.git
+.env*
+backend/.env
+backend/node_modules
+cloud/node_modules
+*.log

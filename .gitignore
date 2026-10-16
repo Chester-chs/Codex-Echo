@@ -1,0 +1,15 @@
+node_modules/
+**/node_modules/
+dist/
+.cache/
+.local/
+.wrangler/
+data/
+.env
+.env.local
+.env.*.local
+backend/.env
+web/wrangler.jsonc
+*.log
+*.sqlite*
+project.private.config.json

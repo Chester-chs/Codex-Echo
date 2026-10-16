@@ -1,0 +1,44 @@
+name: Personal Bark alerts
+
+on:
+  schedule:
+    - cron: '3-59/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      send_test:
+        description: Send one test notification to your configured Bark device
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: personal-bark
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24'
+      - name: Check signals and notify my device
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BARK_DEVICE_KEY: ${{ secrets.BARK_DEVICE_KEY }}
+          BARK_ENABLED: ${{ vars.BARK_ENABLED || 'true' }}
+          BARK_RESET_ALERTS: ${{ vars.BARK_RESET_ALERTS || 'true' }}
+          BARK_FORECAST_ALERTS: ${{ vars.BARK_FORECAST_ALERTS || 'true' }}
+          BARK_THRESHOLD: ${{ vars.BARK_THRESHOLD || '60' }}
+          BARK_LANGUAGE: ${{ vars.BARK_LANGUAGE || 'zh' }}
+          BARK_DAILY_LIMIT: ${{ vars.BARK_DAILY_LIMIT || '20' }}
+          ECHO_SEND_TEST: ${{ inputs.send_test && 'true' || 'false' }}
+        run: node scripts/github-notifier.mjs

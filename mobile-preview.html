@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pulse · Mobile preview</title>
+    <style>
+      body {
+        margin: 0;
+        background: #e8ede5;
+        font-family: system-ui, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+      }
+      .frame {
+        border: 8px solid #243e32;
+        border-radius: 42px;
+        overflow: hidden;
+        background: #f4f6f3;
+        box-shadow: 0 24px 80px #173c3325;
+        width: 390px;
+        height: 844px;
+        max-height: calc(100vh - 42px);
+      }
+      iframe {
+        border: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      @media (max-width: 500px) {
+        .frame {
+          border: 0;
+          border-radius: 0;
+          width: 100vw;
+          height: 100vh;
+          max-height: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="frame">
+      <iframe src="/" title="Pulse mobile web preview"></iframe>
+    </main>
+    <script>
+      const width=Number(new URLSearchParams(location.search).get('width'));
+      if(width>=320&&width<=430)document.querySelector('.frame').style.width=width+'px';
+    </script>
+  </body>
+</html>

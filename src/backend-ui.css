@@ -1,0 +1,32 @@
+.forecast-attribution { display: block; font-size: 10px; line-height: 1.8; color: #60735d; margin-top: 12px; }
+.forecast-history-link { margin-top: 18px; font-size: 12px; }
+.watch-feed { margin-top: 30px; }
+.watch-row { display: block; text-align: left; width: 100%; padding: 20px 22px; background: #f9fbf5; border: 1px solid #dce5d7; border-radius: 16px; margin-top: 12px; }
+.watch-row .signal-excerpt { margin: 12px 0; white-space: normal; line-height: 1.7; }
+.type-badge.forecastSignal { background: #eae5f3; color: #75628b; }
+.signal-icon.forecastSignal { background: #eae5f3; }
+.source-quality { display: flex; align-items: flex-start; gap: 8px; padding: 12px; margin: 14px 0; border-radius: 10px; background: #edf2e9; font-size: 12px; line-height: 1.7; color: #617355; }
+.source-quality.truncated { background: #f8efdd; color: #8b682c; }
+.source-quality .app-icon { flex-shrink: 0; }
+.quote-block { white-space: pre-wrap; overflow-wrap: anywhere; }
+.forecast-method { display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 12px; margin: 18px 0; background: #edf2e9; font-size: 12px; color: #65775a; line-height: 1.8; }
+.forecast-archive { padding: 24px; }
+.archive-item { padding: 20px 0; border-bottom: 1px solid #e0e7d9; }
+.archive-probability { font-size: 32px; font-weight: 600; color: #327761; }
+.archive-basis { display: block; margin: 12px 0; line-height: 1.8; font-size: 13px; white-space: pre-wrap; }
+.archive-item .text-button { margin-top: 12px; }
+.source-health-list { margin: 18px 0; }
+.source-health-list > view { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 11px; color: #697a63; }
+.subscription-state { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; font-size: 12px; color: #637959; }
+.delivery-card { padding: 24px; }
+.delivery-row { display: flex; flex-direction: column; gap: 6px; padding: 14px 0; border-bottom: 1px solid #e0e7d9; font-size: 12px; }
+.delivery-state { color: #327761; }
+.notice.degraded { background: #f8efdd; color: #8b682c; }
+@media(max-width:600px) {
+  .filter-tabs { flex-wrap: wrap; gap: 4px; }
+  .filter-tabs .base-button { font-size: 11px; padding: 8px 11px; }
+  .watch-row { padding: 16px; }
+  .watch-row .signal-title-row { flex-wrap: wrap; }
+  .forecast-archive { padding: 20px; }
+  .source-name { max-width: 140px; text-align: right; }
+}
