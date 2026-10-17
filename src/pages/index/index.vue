@@ -479,7 +479,7 @@
           ><view class="history-count"
             ><text>{{ filteredRecords.length }} {{ t("results") }}</text
             ><text>{{ zoneName }} · {{ t("published") }}</text></view
-          >
+          ><text class="small muted post-delay-note">{{ t("postDelayNote") }}</text>
           <view class="signal-list history-list"
             ><button
               role="button"
@@ -812,6 +812,7 @@
             ><view class="about-source"
               ><text>{{ settings.language==='zh'?'公开重置与推文来源':config.sourceName }}</text
               ><text class="card-description">{{ t("coverage") }}</text
+              ><text class="card-description">{{ t("postDelayNote") }}</text
               ><text class="small muted"
                 >{{ t("polled") }}: {{ time(feed.lastPolledAt) }} ·
                 {{ zoneName }}</text

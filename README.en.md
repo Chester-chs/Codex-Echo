@@ -110,7 +110,7 @@ The Bark **Reset announcements** switch also controls new plan alerts, labelled 
 
 ## Data boundaries
 
-Announcement counts are not personal account credits or completed resets. Publication time is not necessarily completion time. Probabilities are public AIPlanWatch assessments, not official OpenAI promises. The public post archive may be incomplete.
+Announcement counts are not personal account credits or completed resets. Publication time is not necessarily completion time. Probabilities are public AIPlanWatch assessments, not official OpenAI promises. The public post archive may be incomplete. Reset-related posts usually appear within minutes; posts unrelated to resets may be delayed by up to about a day (the codex-reset.com API only provides reset-related posts; other posts rely on the daily follow-builders feed).
 
 Sources include [Data: codex-reset.com](https://codex-reset.com) (public X API mirror, confirmed reset history and strictly validated confirmation events), [AIPlanWatch](https://codex-reset.aiplanwatch.com/), [tokenusage](https://tokenusage.dev/developers), public X embeds and [FxEmbed](https://github.com/FxEmbed/FxEmbed). Personal GitHub notifiers still depend on this project's shared public feed. Free-tier policies and availability can change.
 

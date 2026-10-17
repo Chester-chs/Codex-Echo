@@ -155,6 +155,7 @@ export const messages = {
     polled: "来源最后检查",
     coverage:
       "默认来源仅覆盖部分公告，可能有遗漏或延迟。没有收录，不等于没有发生。",
+    postDelayNote: "重置相关推文通常几分钟内更新；与重置无关的推文可能推迟，最长约一天。",
     reminderTitle: "把值得关注的消息，交给提醒。",
     reminderSubtitle: "选择你关心的信号，保留自己的节奏。",
     reminderCta: "设置我的提醒",
@@ -377,6 +378,7 @@ export const messages = {
     polled: "Source last checked",
     coverage:
       "The default source covers only some announcements and may be delayed. An absent record does not mean an event did not happen.",
+    postDelayNote: "Reset-related posts usually appear within minutes; posts unrelated to resets may be delayed by up to about a day.",
     reminderTitle: "Let the important updates come to you.",
     reminderSubtitle: "Choose your signals. Stay in your flow.",
     reminderCta: "Set up notifications",

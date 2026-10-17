@@ -110,7 +110,7 @@ Bark 的「重置公告」开关同时控制新计划提醒，消息会写明「
 
 ## 数据说明
 
-公告条数不是你的账号额度或实际重置次数，发布时间不一定是完成时间。概率来自 AIPlanWatch 的公开来源评估，不是 OpenAI 官方承诺。免费公开来源收录的推文可能存在遗漏。
+公告条数不是你的账号额度或实际重置次数，发布时间不一定是完成时间。概率来自 AIPlanWatch 的公开来源评估，不是 OpenAI 官方承诺。免费公开来源收录的推文可能存在遗漏。重置相关推文通常几分钟内更新；与重置无关的推文可能推迟，最长约一天（codex-reset.com 接口只提供重置相关推文，其他推文依赖每天更新一次的 follow-builders）。
 
 来源包括 [Data: codex-reset.com](https://codex-reset.com)（公开 X API 推文镜像、已确认重置记录及严格校验的确认事件）、[AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。GitHub 自助版独立执行个人推送，仍读取本项目共享的公开数据服务。各平台额度和可用性可能变化。
 

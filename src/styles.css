@@ -1171,6 +1171,7 @@ image {
   font-size: 9px;
   margin: 22px 4px 13px;
 }
+.post-delay-note { display: block; margin: -6px 4px 13px; line-height: 1.5; }
 .history-list .signal-row {
   padding: 22px;
 }
