@@ -3,7 +3,7 @@ import {getForecast} from '../src/lib/domain.mjs';
 import {annotateResetPlan,isCurrentPlanNotice,resetNoticeKey} from '../src/lib/reset-plan.mjs';
 
 const BASE='/api/bark/subscription',LOCK='visitor-dispatch:v1',LEASE=180000,DAY=86400000;
-const ORIGINS=new Set(['https://echo-radar.pages.dev','https://pulse-radar.fuzzy-badge-7763.chatgpt.site','http://127.0.0.1:4174','http://127.0.0.1:5173','http://127.0.0.1:5174']);
+const ORIGINS=new Set(['https://echo-radar.pages.dev','http://127.0.0.1:4174','http://127.0.0.1:5173','http://127.0.0.1:5174']);
 const encoder=new TextEncoder(),iso=n=>new Date(n).toISOString();
 const fail=(code,status=400)=>{throw Object.assign(new Error(code),{code,status});};
 const validId=id=>typeof id==='string'&&/^[A-Za-z0-9_-]{8,80}$/.test(id);

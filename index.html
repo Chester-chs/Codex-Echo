@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <script data-canonical-redirect>
       (() => {
-        if (window.location.origin !== "https://pulse-radar.fuzzy-badge-7763.chatgpt.site") return;
+        const legacyOrigin = document.documentElement.getAttribute("data-legacy-origin");
+        if (!legacyOrigin || window.location.origin !== legacyOrigin) return;
         const destination = new URL("https://echo-radar.pages.dev/");
         destination.pathname = window.location.pathname;
         destination.search = window.location.search;
