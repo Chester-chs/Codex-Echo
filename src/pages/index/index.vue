@@ -816,7 +816,7 @@
                 >{{ t("polled") }}: {{ time(feed.lastPolledAt) }} ·
                 {{ zoneName }}</text
               ></view
-            ><view class="source-health-list"><view v-for="source in feed.sources" :key="source.name"><text>{{ settings.language==='zh'?({history:'重置公告',timeline:'重置相关推文',watch:'观察预测',builders:'普通推文',tokenusage:'重置记录'})[source.name]||source.name:source.name }}</text><text>{{ t(sourceIsFresh(source) ? 'sourceOk' : 'sourceDelayed') }} · {{ time(source.lastSuccessAt) }}</text></view></view><text class="field-label">{{ t("learn") }}</text
+            ><view class="source-health-list"><view v-for="source in feed.sources" :key="source.name"><text>{{ settings.language==='zh'?({history:'重置公告',timeline:'重置相关推文',watch:'观察预测',builders:'普通推文',tokenusage:'重置记录','codexreset-feed':'Codex Reset · 推文接口','codexreset-timeline':'Codex Reset · 重置记录'})[source.name]||source.name:({'codexreset-feed':'Codex Reset · Post API','codexreset-timeline':'Codex Reset · Reset history'})[source.name]||source.name }}</text><text>{{ t(sourceIsFresh(source) ? 'sourceOk' : 'sourceDelayed') }} · {{ time(source.lastSuccessAt) }}</text></view></view><text class="field-label">{{ t("learn") }}</text
             ><text class="card-description">{{ t("automaticHelp") }}</text
             ><text class="card-description">{{ t("bankedHelp") }}</text
             ><view class="open-source-note"

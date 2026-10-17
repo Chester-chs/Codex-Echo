@@ -57,7 +57,7 @@
 - **确认完成**：后续收录到来源明确确认完成的新消息后，再单独发送一次完成提醒；两类消息分别去重。
 - **仅到达计划时间**：网页显示「等待完成确认」，不会自动认定重置已完成，也不会因此发送完成提醒。
 
-iPhone 需要联网，并允许 Bark 通知。来源约每 10 分钟更新，云端推送每分钟调度，可能稍有延迟；首次绑定不补发历史消息。上述说明针对 Bark 云端提醒，页面提醒仍需保持页面开启并运行。
+iPhone 需要联网，并允许 Bark 通知。配置 Queues 后，发现新消息即提交发送；没有队列时保留每分钟发送。推文抓取建议每 5 分钟，确认事件每分钟检查，实际频率取决于部署配置。上游和网络仍可能带来延迟；首次绑定不补发历史消息。上述说明针对 Bark 云端提醒，页面提醒仍需保持页面开启并运行。
 
 | 提醒方式 | 使用要求 |
 |---|---|
@@ -112,7 +112,7 @@ Bark 的「重置公告」开关同时控制新计划提醒，消息会写明「
 
 公告条数不是你的账号额度或实际重置次数，发布时间不一定是完成时间。概率来自 AIPlanWatch 的公开来源评估，不是 OpenAI 官方承诺。免费公开来源收录的推文可能存在遗漏。
 
-来源包括 [AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。GitHub 自助版独立执行个人推送，仍读取本项目共享的公开数据服务。各平台额度和可用性可能变化。
+来源包括 [Data: codex-reset.com](https://codex-reset.com)（公开 X API 推文镜像、已确认重置记录及严格校验的确认事件）、[AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。GitHub 自助版独立执行个人推送，仍读取本项目共享的公开数据服务。各平台额度和可用性可能变化。
 
 <details>
 <summary>开发者：源码与本地构建</summary>
@@ -138,3 +138,15 @@ npm run build
 使用 Vue、uni-app、Cheerio、Lucide 和 Radix Colors；许可见 `licenses/`。自有代码使用 MIT 许可，上游内容遵循各自许可。与 OpenAI、原雷达作者及 Bark 无隶属关系。
 
 </details>
+
+## 更及时的数据与可选发送队列
+
+新增 codex-reset.com 来源以改善旧归档更新延迟。请求有署名、15 秒超时、大小限制，以及每接口每分钟最多一次的限制；旧来源继续备用。来源抓取成功不等于已收录 X 的全部最新推文。
+
+严格支持实测到的 `latest_alert` 结构（目前仅 `reset/confirmed`）。未知预警类型不会猜测推送；明确计划仍由原有推文规则触发。首次启用不补发历史，绑定后符合条件的计划及完成分别提醒。个人额度以账号实际显示为准。
+
+Queues 为可选配置：发现后即提交发送，失败指数退避，同一事件用数据库认领去重，并带稳定 Bark 合并 ID；单设备每天 20 次、全站 600 次发送尝试。五条消息批次查询预算为 48。没有队列时沿用定时发送，个人模式和 GitHub 自助版不改用队列。**1–3 分钟是目标，不是送达承诺**，特别是五分钟推文抓取可能更慢。
+
+[Cloudflare 免费队列部署与验证教程](docs/CLOUDFLARE_QUEUES.md) 包含创建命令、私有配置合并、日志检查、故障退回及单设备合并 ID 测试。代码推送不会自动创建队列或修改你的私有配置；请按教程完成启用。
+
+![Codex Echo cloud alerts and delivery explanation (English interface)](docs/images/cloud-alerts-en.png)

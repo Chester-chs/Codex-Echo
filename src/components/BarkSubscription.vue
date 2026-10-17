@@ -6,7 +6,7 @@
    <aside class="bark-cloud-explainer" :aria-label="c('cloudRunTitle')">
     <strong>{{ c('cloudRunTitle') }}</strong><p>{{ c('cloudRunHelp') }}</p>
     <ul><li>{{ c('planAlertHelp') }}</li><li>{{ c('completionAlertHelp') }}</li><li>{{ c('waitingHelp') }}</li></ul>
-    <p>{{ c('phoneNeeds') }}</p>
+    <p>{{ c('phoneNeeds') }}</p><p>{{ c('deliveryTiming') }}</p><p><a href="https://codex-reset.com" target="_blank" rel="noopener noreferrer">{{ language==='zh'?'数据 / Data: codex-reset.com':'Data: codex-reset.com' }}</a></p>
    </aside>
    <div v-if="!subscription" class="bark-address"><label for="bark-address">{{ c('address') }}</label><div class="bark-address-input"><component :is="'input'" id="bark-address" class="bark-native-address" :type="reveal?'text':'password'" :value="address" :placeholder="c('placeholder')" autocomplete="off" autocapitalize="off" spellcheck="false" :disabled="busy" :aria-label="c('address')" @input="address=$event.target.value;bindId=''" @keydown.enter="connect" /><WebButton class="base-button" :aria-label="c(reveal?'hide':'show')" @click="reveal=!reveal">{{ c(reveal?'hide':'show') }}</WebButton></div><p>{{ c('privacy') }}</p></div>
    <div v-else class="bark-connected"><span>{{ c('device') }} <b>{{ subscription.deviceHint }}</b></span><span v-if="dirty" class="bark-dirty">{{ c('unsaved') }}</span></div>

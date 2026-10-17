@@ -35,11 +35,17 @@ export function formatBark(job,{language='zh'}={}) {
  if(job.kind==='test'){
   title=zh?'Codex 回响 · 锁屏推送测试':'Codex Echo · Push test';
   body=zh?'这是一条测试通知，不代表发生重置或出现新的预测。\n\n通知由云端发送，关闭网页和电脑后仍可运行。请确认 iPhone 锁屏时能看到这条消息，点击可打开回响网页。':'This is a test, not a reset announcement or a new forecast.\n\nSent by the cloud service, independently of the website and your computer. Please check this message on your iPhone Lock Screen. Tap to open Echo.';
+ }else if(job.kind==='alert'){
+  title=zh?'Codex 回响 · ✅ Codex 已重置':'Codex Echo · ✅ Codex reset confirmed';
+  const method=e.confirmationSource==='operator_observed'?(zh?'codex-reset 对其自有账号的实测；不代表所有账号':'codex-reset measurement on its own accounts; not all accounts'):(zh?'Tibo 明确确认':'Explicit confirmation from Tibo');
+  body=zh?`确认方式：${method}\n\n来源记录时间\n${bothTimes(e.observedAt||e.confirmedAt||e.sourceAt,true)}\n\n不代表你的个人账号额度已恢复，以账号显示为准。\n\nData: codex-reset.com`:`Confirmed by: ${method}\n\nSource observation time\n${bothTimes(e.observedAt||e.confirmedAt||e.sourceAt,false)}\n\nThis does not confirm your personal account allowance has recovered. Check your account.\n\nData: codex-reset.com`;
+  url.hash='/pages/index/index?record='+encodeURIComponent(e.id);
  }else if(job.kind==='reset'){
   const plan=interpretResetDirective(e)||(e.category==='schedule'&&Number.isFinite(Date.parse(e.scheduledAt))?{kind:'scheduled',scheduledAt:e.scheduledAt}:null);
   if(plan?.kind==='scheduled'){
    title=zh?'Codex 回响 · 已公布重置计划':'Codex Echo · Planned reset announced';
    body=zh?`计划重置时间\n${bothTimes(plan.scheduledAt,true)}\n\n来源原话（中文译文）\n${clip(chineseText(e.original,e.translation))}\n\n这是来源公布的计划，不代表已经完成；到点后仍等待完成确认，也不保证你的个人账号额度恢复。\n\n公告发布于\n${bothTimes(e.postedAt,true)}`:`Planned reset time\n${bothTimes(plan.scheduledAt,false)}\n\nOriginal announcement\n${clip(e.original)}\n\nAn announced plan, not a completed reset. Completion still needs confirmation after the target time; personal account availability is not guaranteed.\n\nAnnounced\n${bothTimes(e.postedAt,false)}`;
+   if(e.textSource?.startsWith('https://codex-reset.com/'))body+='\n\nData: codex-reset.com';
    url.hash='/pages/index/index?record='+encodeURIComponent(e.id);
    return {title,body,group:zh?'Codex 回响':'Codex Echo',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};
   }
@@ -54,12 +60,14 @@ export function formatBark(job,{language='zh'}={}) {
   body=zh?`来源预测：${e.probability}%\n这是 AIPlanWatch 的来源判断，非官方承诺，也不是 Tibo 本人给出的概率。\n\n来源依据\n${basis}\n\n来源时间描述\n${window}（以来源记录时刻为起点）\n\n来源记录于\n${bothTimes(e.publishedAt,true)}\n\n有效期至\n${bothTimes(e.validUntil,true)}\n\n点通知查看当前预测与完整出处。`:`Source estimate: ${e.probability}%\nAn AIPlanWatch assessment, not an official promise or a probability stated by Tibo.\n\nBasis\n${basis}\n\nSource window\n${window} (from the source record time)\n\nSource recorded\n${bothTimes(e.publishedAt,false)}\n\nValid until\n${bothTimes(e.validUntil,false)}\n\nTap for the current assessment and full source.`;
   url.hash='/pages/index/index?forecast=1';
  }
+ if(job.kind==='reset'&&e.textSource?.startsWith('https://codex-reset.com/'))body+='\n\nData: codex-reset.com';
  return {title,body,group:zh?'Codex 回响':'Codex Echo',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};
 }
 export async function sendBark(job,env,{fetcher=fetch}={}) {
  let response,data;
  try{
-  response=await fetcher('https://api.day.app/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_key:env.BARK_DEVICE_KEY,...formatBark(job,barkSettings(env))}),redirect:'manual',signal:AbortSignal.timeout(10000)});
+  response=await fetcher('https://api.day.app/push',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({device_key:env.BARK_DEVICE_KEY,...formatBark(job,barkSettings(env)),...(job.collapseId?{id:job.collapseId}:{})}),redirect:'manual',signal:AbortSignal.timeout(10000)});
+  if(response.status===429||response.status>=500)return {state:'retry',code:'provider_'+response.status};
   data=await response.json();
  }catch{return {state:'unknown',code:'transport_uncertain'};}
  if(response.ok&&data?.code===200)return {state:'sent',code:'provider_accepted'};

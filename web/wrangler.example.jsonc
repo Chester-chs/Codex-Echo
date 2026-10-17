@@ -16,17 +16,19 @@
     "BARK_FORECAST_ALERTS": "true",
     "BARK_THRESHOLD": "60",
     "BARK_LANGUAGE": "zh",
-    "BARK_DAILY_LIMIT": "20"
+    "BARK_DAILY_LIMIT": "20",
+    "BARK_RESEND_UNCERTAIN": "true",
+    "PUBLIC_POLL_SECONDS": "300"
   },
   "triggers": {
     "crons": [
-      "*/10 * * * *",
+      "*/5 * * * *",
       "* * * * *"
     ]
   },
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 0.1
+    "head_sampling_rate": 1
   },
   "kv_namespaces": [
     {
@@ -41,5 +43,22 @@
       "database_id": "YOUR_D1_DATABASE_ID",
       "migrations_dir": "migrations"
     }
-  ]
+  ],
+  "queues": {
+    "producers": [
+      {
+        "binding": "BARK_QUEUE",
+        "queue": "bark-send"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "bark-send",
+        "max_batch_size": 5,
+        "max_batch_timeout": 0,
+        "max_retries": 3,
+        "dead_letter_queue": "bark-send-dlq"
+      }
+    ]
+  }
 }

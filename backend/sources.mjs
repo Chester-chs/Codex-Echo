@@ -1,3 +1,4 @@
+import {fetchCodexReset,parseCodexResetFeed,parseCodexResetTimeline} from './codex-reset.mjs';
 import {load} from 'cheerio';
 import {BUILDERS_FEED,parseBuilderFeed} from './tweets.mjs';
 import {annotateResetPlan} from '../src/lib/reset-plan.mjs';
@@ -112,7 +113,7 @@ export async function fetchText(url,{fetcher=fetch,headers={}}={}) {
  for await(const chunk of response.body){size+=chunk.length;if(size>3_000_000)throw new Error('Upstream response too large');chunks.push(decoder.decode(chunk,{stream:true}));}
  return chunks.join('')+decoder.decode();
 }
-export async function collectPublicSources({fetcher=fetch,now=new Date().toISOString(),backfill=false}={}) {
+export async function collectPublicSources({fetcher=fetch,now=new Date().toISOString(),backfill=false,codexRequest=path=>fetchCodexReset(path,{fetcher,now:Date.parse(now)})}={}) {
  const sources=[],groups=[];let forecast;
  const request=url=>fetchText(url,{fetcher});
  const results=await Promise.allSettled([
@@ -120,9 +121,11 @@ export async function collectPublicSources({fetcher=fetch,now=new Date().toISOSt
   (async()=>{let url=RADAR+'/history',all=[];for(let i=0;url&&i<(backfill?8:1);i++){const page=parseHistory(await request(url),now);all.push(...page.records);url=page.next;}return all;})(),
   (async()=>{let url=RADAR+'/tibo',all=[];for(let i=0;url&&i<(backfill?8:1);i++){const page=parseTimeline(await request(url));all.push(...page.records);url=page.next;}return all;})(),
   (async()=>parseWatch(await request(RADAR+'/'),now))(),
-  (async()=>parseBuilderFeed(JSON.parse(await request(BUILDERS_FEED)),now))()
+  (async()=>parseBuilderFeed(JSON.parse(await request(BUILDERS_FEED)),now))(),
+  (async()=>parseCodexResetFeed(await codexRequest('/api/feed'),Date.parse(now)))(),
+  (async()=>parseCodexResetTimeline(await codexRequest('/api/timeline')))()
  ]);
- const names=['tokenusage','history','timeline','watch','builders'];
+ const names=['tokenusage','history','timeline','watch','builders','codexreset-feed','codexreset-timeline'];
  results.forEach((r,i)=>{sources.push({name:names[i],status:r.status==='fulfilled'?'ok':'error',checkedAt:now});if(r.status==='fulfilled'){if(i===3)forecast=r.value;else groups.push(r.value);}else console.warn(JSON.stringify({event:'source_error',source:names[i],message:String(r.reason?.message||'Unknown error').slice(0,180)}));});
  return {records:mergeRecords(...groups),forecast,sources,checkedAt:now};
 }

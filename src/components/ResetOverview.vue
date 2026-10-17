@@ -72,7 +72,7 @@
     <slot name="cloud-notifications" />
 
     <details class="pulse-notifications"><summary><span><AppIcon name="bell" /><strong>{{ c('notifications') }}</strong><span v-if="webArmed" class="pulse-enabled">{{ t('webMonitoring') }}</span><small v-else>{{ c('notificationsHint') }}</small></span><span class="pulse-expand">+</span></summary><div class="pulse-notification-content"><slot name="notifications" /></div></details>
-    <footer class="pulse-footer"><span>{{ t('siteName') }}<span class="pulse-footer-dot">.</span> <small>{{ c('footerNote') }}</small></span><div><span>{{ c('updated') }} {{ time(checkedAt) }} · {{ zoneName }}</span><WebButton class="base-button pulse-link" @click="$emit('about')">{{ c('dataDetails') }}<AppIcon name="arrow-up-right" /></WebButton></div></footer>
+    <footer class="pulse-footer"><span>{{ t('siteName') }}<span class="pulse-footer-dot">.</span> <small>{{ c('footerNote') }}</small> <a href="https://codex-reset.com" target="_blank" rel="noopener noreferrer" class="pulse-link">{{ t('codexResetCredit') }}</a></span><div><span>{{ c('updated') }} {{ time(checkedAt) }} · {{ zoneName }}</span><WebButton class="base-button pulse-link" @click="$emit('about')">{{ c('dataDetails') }}<AppIcon name="arrow-up-right" /></WebButton></div></footer>
   </main>
 </template>
 

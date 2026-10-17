@@ -57,7 +57,7 @@ Keep **Reset announcements** enabled under **Phone alerts from the cloud**:
 - **Completion confirmed:** a later newly collected explicit source confirmation triggers a separate completion alert. The two message types are deduplicated independently.
 - **Target time reached only:** the website shows **Awaiting confirmation**. Reaching the target does not automatically confirm completion or trigger a completion alert.
 
-Your iPhone needs an internet connection and permission to display Bark notifications. Sources update approximately every 10 minutes; cloud delivery runs every minute, so alerts may be delayed. Initial connection does not replay historical messages. This applies to Bark cloud alerts; page notifications still require the page to remain open and running.
+Your iPhone needs an internet connection and permission to display Bark notifications. With Queues configured, discovery submits messages immediately; without a queue, minute dispatch remains. Recommended post collection is every 5 minutes and confirmed-event checks every minute; actual cadence follows deployment configuration. Upstream and network delays remain possible. Initial connection does not replay historical messages. This applies to Bark cloud alerts; page notifications still require the page to remain open and running.
 
 | Mode | Requirement |
 |---|---|
@@ -112,7 +112,7 @@ The Bark **Reset announcements** switch also controls new plan alerts, labelled 
 
 Announcement counts are not personal account credits or completed resets. Publication time is not necessarily completion time. Probabilities are public AIPlanWatch assessments, not official OpenAI promises. The public post archive may be incomplete.
 
-Sources include [AIPlanWatch](https://codex-reset.aiplanwatch.com/), [tokenusage](https://tokenusage.dev/developers), public X embeds and [FxEmbed](https://github.com/FxEmbed/FxEmbed). Personal GitHub notifiers still depend on this project's shared public feed. Free-tier policies and availability can change.
+Sources include [Data: codex-reset.com](https://codex-reset.com) (public X API mirror, confirmed reset history and strictly validated confirmation events), [AIPlanWatch](https://codex-reset.aiplanwatch.com/), [tokenusage](https://tokenusage.dev/developers), public X embeds and [FxEmbed](https://github.com/FxEmbed/FxEmbed). Personal GitHub notifiers still depend on this project's shared public feed. Free-tier policies and availability can change.
 
 <details>
 <summary>Developers: source and local build</summary>
@@ -138,3 +138,15 @@ Web output: `dist/build/h5/`. Run `npm run server`, then `npm run dev` in anothe
 Uses Vue, uni-app, Cheerio, Lucide and Radix Colors. See `licenses/`. Original code is MIT licensed; upstream content retains its own terms. Unaffiliated with OpenAI, Bark or the original radar author.
 
 </details>
+
+## Faster sources and optional delivery queues
+
+codex-reset.com improves on slow archive sources. Requests identify the project, have a 15-second timeout/body limit and are limited to one request per endpoint per minute. Existing sources remain as fallback. Successful checks do not guarantee a complete or fully current X feed.
+
+Only observed `latest_alert` schemas are accepted (currently `reset/confirmed`). Unknown warning types are never guessed or pushed; explicit plans continue through the existing post rules. Initial enablement never replays history. Eligible new plans and completion notices after binding are separate alerts. Check your own account for personal allowance.
+
+Queues is optional: discovery submits immediately, failures use exponential backoff, database claims deduplicate each event and Bark receives a stable collapse ID. Daily caps remain 20 attempts/device and 600 site-wide. Each five-message batch has a 48-query budget. Without queues, scheduled sending continues; personal mode and GitHub self-service are not converted. **1–3 minutes is a target, not a delivery guarantee**; five-minute post collection can take longer.
+
+The [free Cloudflare Queues deployment and verification guide](docs/CLOUDFLARE_QUEUES.en.md) includes resource commands, private configuration merge, logs, rollback and a single-device collapse-ID test. A source push does not create queues or edit your private configuration: follow the guide to enable it.
+
+![Codex Echo cloud alerts and delivery explanation (English interface)](docs/images/cloud-alerts-en.png)

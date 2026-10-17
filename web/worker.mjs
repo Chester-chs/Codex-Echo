@@ -1,9 +1,12 @@
+import {countingDb} from './query-budget.mjs';
+import {discoverCodexReset} from './codex-alerts.mjs';
+import {fetchCodexReset} from '../backend/codex-reset.mjs';
 import {collectPublicSources,enrichOriginal,mergeRecords} from '../backend/sources.mjs';
 import {mergePublic,publicFeed,uniqueForecastHistory} from '../cloud/state.mjs';
 import {translatePublicText} from '../backend/translate.mjs';
 import {archivedTranslations} from '../src/lib/translations-zh.mjs';
 import {runBark,queueBarkTest,barkStatus,barkAuthenticated} from './bark.mjs';
-import {handleVisitorRequest,runVisitorBark,ensureOwnerSubscription,visitorAdminStatus,queueVisitorTest,visitorCapacity} from './visitor-bark.mjs';
+import {handleVisitorRequest,runVisitorBark,ensureOwnerSubscription,visitorAdminStatus,queueVisitorTest,visitorCapacity,consumeBarkBatch} from './visitor-bark.mjs';
 
 const KEY='public-v1';
 const headers={'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET, HEAD, OPTIONS','Access-Control-Allow-Headers':'Content-Type','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=30'};
@@ -47,7 +50,7 @@ export async function handleRequest(request,env,ctx={},now=Date.now()) {
  }
  if(!['GET','HEAD'].includes(request.method))return json({error:'Read-only public API'},405);
  if(pathname==='/healthz')return json({status:'ok'});
- if(pathname==='/api/status')return json({web:true,wechat:{configured:false,ready:false},bark:{personalChannelSupported:true,selfService:env.BARK_VISITORS_ENABLED==='true',capacity:visitorCapacity(env)},pollSeconds:600});
+ if(pathname==='/api/status')return json({web:true,wechat:{configured:false,ready:false},bark:{personalChannelSupported:true,selfService:env.BARK_VISITORS_ENABLED==='true',capacity:visitorCapacity(env)},pollSeconds:Number(env.PUBLIC_POLL_SECONDS)||600});
  if(!['/api/feed','/api/forecasts'].includes(pathname))return json({error:'Not found'},404);
  try {
   const state=await env.RADAR.get(KEY,'json');
@@ -60,7 +63,11 @@ export async function handleRequest(request,env,ctx={},now=Date.now()) {
 export async function syncPublic(env,{now=Date.now(),collect=collectPublicSources,enrich=enrichOriginal,translate=translatePublicText}={}) {
  const previous=await env.RADAR.get(KEY,'json');
  const backfill=!previous?.backfillComplete;
- const snapshot=await collect({now:new Date(now).toISOString(),backfill});
+ const codexRequest=async path=>{
+  if(env.NOTIFY_DB){const permit=await env.NOTIFY_DB.prepare("INSERT INTO bark_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value WHERE CAST(bark_meta.value AS INTEGER)<=? RETURNING value").bind('codex-reset:attempt:'+path,String(now),now-60000).first();if(!permit)throw new Error('Endpoint minute budget already used');}
+  try{return await fetchCodexReset(path,{now});}catch(error){if(error.retryAt&&env.NOTIFY_DB)await env.NOTIFY_DB.prepare('UPDATE bark_meta SET value=? WHERE name=?').bind(String(error.retryAt-60000),'codex-reset:attempt:'+path).run();throw error;}
+ };
+ const snapshot=await collect({now:new Date(now).toISOString(),backfill,codexRequest});
  let state=mergePublic(previous,snapshot,now);
  if(backfill&&['history','timeline'].every(name=>snapshot.sources?.some(s=>s.name===name&&s.status==='ok')))state.backfillComplete=true;
  const candidates=state.records.filter(r=>!['verified','mirror'].includes(r.textStatus)).sort((a,b)=>(Date.parse(a.textCheckedAt)||0)-(Date.parse(b.textCheckedAt)||0)).slice(0,3);
@@ -95,7 +102,10 @@ export default {
   }
   return handleRequest(request,env,ctx);
  },
+ async queue(batch,env){return consumeBarkBatch(batch,env);},
  async scheduled(controller,env,ctx){
+  if(env.NOTIFY_DB)env={...env,NOTIFY_DB:countingDb(env.NOTIFY_DB)};
+  if(controller.cron==='* * * * *'&&env.BARK_VISITORS_ENABLED==='true')await discoverCodexReset(env);
   let state;try{state=controller.cron==='* * * * *'?await env.RADAR.get(KEY,'json'):await syncPublic(env);}catch{console.error(JSON.stringify({event:'public_sync_failed'}));if(env.BARK_VISITORS_ENABLED==='true'&&controller.cron!=='* * * * *')return;state=await env.RADAR.get(KEY,'json');}
   if(env.BARK_VISITORS_ENABLED==='true'&&controller.cron!=='* * * * *')return;
   try{console.log(JSON.stringify({event:'bark_check',...await (env.BARK_VISITORS_ENABLED==='true'?runVisitorBark(env,state||{}):runBark(env,state||{}))}));}catch{console.error(JSON.stringify({event:'bark_check_failed'}));}
