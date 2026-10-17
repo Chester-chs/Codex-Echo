@@ -13,10 +13,31 @@ function base(id,url,postedAt){return {id,url:identity(id,url),postedAt:iso(post
 export function parseCodexResetFeed(json,now=Date.now()){
  const n=typeof now==='string'?Date.parse(now):now;
  if(json?.source!=='x-api'||json.stale===true||!validTime(json.fetched_at)||Date.parse(json.fetched_at)>n+60000||n-Date.parse(json.fetched_at)>1800000||!Array.isArray(json.tweets))bad();
- return json.tweets.map(p=>{
+ const records=json.tweets.map(p=>{
   if(!validTime(p.at)||Date.parse(p.at)>n+60000||!text(p.text)||typeof p.kind!=='string'||typeof p.explicit_reset_claim!=='boolean'||typeof p.is_reply!=='boolean')bad();
   return {...base(p.id,p.url,p.at),original:entities(p.text),category:'post',textStatus:'mirror',textSource:CODEX_RESET+'/api/feed',isReply:p.is_reply,inReplyToId:p.in_reply_to_tweet_id||null,providerKind:p.kind};
  });
+ // Optional, undocumented context must never invalidate the announcement feed.
+ const seen=new Set(records.map(r=>r.id));
+ for(const p of Array.isArray(json.radar_context)?json.radar_context.slice(0,100):[]){
+  try{
+   if(p?.visibility_only!==true||p.display_kind!=='context'||!validTime(p.at)||Date.parse(p.at)>n+60000||!text(p.text)||seen.has(p.id))continue;
+   records.push({...base(p.id,p.url,p.at),original:entities(p.text),category:'post',visibilityOnly:true,textStatus:'mirror',textSource:CODEX_RESET+'/api/feed'});seen.add(p.id);
+  }catch{/* Ignore invalid optional context independently. */}
+ }
+ return records;
+}
+export function parseCodexResetArchive(html,now=Date.now()){
+ const $=load(html),records=[],seen=new Set(),n=typeof now==='string'?Date.parse(now):now;
+ // Public text archive only; do not execute scripts or infer reset facts from badges.
+ $('article.tx-row').slice(0,200).each((_,element)=>{
+  const row=$(element),url=row.find('a.tx-time').attr('href'),id=row.attr('id')?.match(/^p(\d{15,22})$/)?.[1],at=row.find('a.tx-time time').attr('datetime');
+  const paragraph=row.find('.tx-card > .tx-text').first().clone();paragraph.find('br').replaceWith('\n');const original=paragraph.text().trim();
+  try{if(seen.has(id)||!validTime(at)||Date.parse(at)>n+60000||!text(original))return;
+   records.push({...base(id,url,at),original,category:'post',visibilityOnly:true,textStatus:'mirror',textSource:CODEX_RESET+'/tibo/x',isReply:row.attr('data-reply')==='1'});seen.add(id);
+  }catch{/* A malformed post must not hide other archived posts. */}
+ });
+ if(!records.length)throw new Error('Public Tibo archive markup changed or empty');return records;
 }
 export function parseCodexResetTimeline(json){
  if(!Array.isArray(json?.events))bad();
@@ -36,12 +57,12 @@ export function parseLatestAlert(json,{log=x=>console.log(JSON.stringify(x))}={}
  return {id:p.id,kind:p.kind,state:p.state,sourceAt:iso(p.source_at),url,summary:entities(p.summary),observationMessage:p.observation_message?entities(p.observation_message):'',confirmationSource:p.confirmation_source,observedAt:p.observed_at?iso(p.observed_at):null,confirmedAt:p.confirmed_at?iso(p.confirmed_at):null,confirmationUrl:p.confirmation_url||null};
 }
 export async function fetchCodexReset(path,{fetcher=fetch,now=Date.now()}={}){
- if(!['/api/feed','/api/forecast','/api/timeline'].includes(path))throw new Error('Unsupported codex-reset endpoint');
+ if(!['/api/feed','/api/forecast','/api/timeline','/tibo/x'].includes(path))throw new Error('Unsupported codex-reset endpoint');
  let cache=caches.get(fetcher);if(!cache){cache=new Map();caches.set(fetcher,cache);}const entry=cache.get(path);
  if(entry&&now<entry.expires&&now>=entry.at)return structuredClone(await entry.promise);
  const promise=(async()=>{
   const r=await fetcher(CODEX_RESET+path,{headers:{'User-Agent':CODEX_RESET_UA},signal:AbortSignal.timeout(15000),redirect:'manual'});
   if(!r.ok){const error=new Error('HTTP '+r.status);if(r.status===429){const raw=r.headers.get('Retry-After'),delay=/^\d+$/.test(raw||'')?Number(raw)*1000:Date.parse(raw)-now;error.retryAt=now+Math.min(86400000,Math.max(60000,Number.isFinite(delay)?delay:60000));const active=cache.get(path);if(active)active.expires=error.retryAt;}throw error;}if(Number(r.headers.get('Content-Length'))>3000000)throw new Error('Response too large');
-  let size=0,body='';const decoder=new TextDecoder();for await(const chunk of r.body){size+=chunk.byteLength;if(size>3000000)throw new Error('Response too large');body+=decoder.decode(chunk,{stream:true});}return JSON.parse(body+decoder.decode());
+  let size=0,body='';const decoder=new TextDecoder();for await(const chunk of r.body){size+=chunk.byteLength;if(size>3000000)throw new Error('Response too large');body+=decoder.decode(chunk,{stream:true});}body+=decoder.decode();return path==='/tibo/x'?body:JSON.parse(body);
  })();cache.set(path,{at:now,expires:now+60000,promise});return structuredClone(await promise);
 }

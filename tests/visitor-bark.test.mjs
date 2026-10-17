@@ -24,6 +24,17 @@ const reset=(id,posted=NOW+1000)=>({id,url:'https://x.com/thsottiaux/status/'+id
 const forecast=(probability=70,time=NOW+1000)=>({id:'watch-1',kind:'source-watch',probability,basis:'Public clue',basisZh:'公开线索',windowText:'within 24h',publishedAt:iso(time),checkedAt:iso(time),sourceFreshUntil:iso(time+1800000),validUntil:iso(time+3600000),sourceUrl:reset('10').url});
 const feed=(records=[],f=null,time=NOW)=>({records,forecast:f,sources:[{name:'history',status:'ok',lastSuccessAt:iso(time)}]});
 
+test('display-only archive posts never send reset or plan pushes, while real alerts still deliver',async()=>{
+ const {mergeRecords}=await import('../backend/sources.mjs');const e=env();await bind(e,'context-device-001');
+ const ordinary=['The reset is complete.','We will reset in 5 hours.'].map((original,i)=>({...reset('211753604604159590'+i),original,textStatus:'verified',visibilityOnly:true}));
+ const sent=[],send=async job=>{sent.push(job);return {state:'sent',code:'provider_accepted'};};
+ await runVisitorBark(e,feed(mergeRecords(ordinary)),{now:NOW+2000,send});assert.equal(sent.length,0);
+ const actual={...reset('2117536046041595909',NOW+2000),original:'The reset is complete.',textStatus:'verified'};
+ const current=feed(mergeRecords(ordinary,[actual]),forecast());
+ await runVisitorBark(e,current,{now:NOW+3000,send});assert.equal(sent.length,1);assert.equal(sent[0].kind,'reset');
+ await runVisitorBark(e,current,{now:NOW+63000,send});assert.equal(sent.length,2);assert.equal(sent[1].kind,'forecast');
+});
+
 test('announced plans use reset opt-in, ignore forecast thresholds, and never dispatch after their target',async()=>{
  const e=env();await bind(e,'plan-device-001',prefs({forecastAlerts:false,threshold:90}));
  const plan={...reset('2117536046041595904'),original:'We will reset Codex in 5 hours.',textStatus:'verified'};

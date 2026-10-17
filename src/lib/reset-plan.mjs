@@ -1,5 +1,5 @@
 const HOUR=3600000,DAY=24*HOUR;
-const trusted=r=>r&&['verified','mirror'].includes(r.textStatus)&&/^https:\/\/(?:x\.com|twitter\.com)\/thsottiaux\/status\/\d+(?:\?[^\s]*)?$/.test(r.url||'')&&Number.isFinite(Date.parse(r.postedAt));
+const trusted=r=>r&&!r.visibilityOnly&&['verified','mirror'].includes(r.textStatus)&&/^https:\/\/(?:x\.com|twitter\.com)\/thsottiaux\/status\/\d+(?:\?[^\s]*)?$/.test(r.url||'')&&Number.isFinite(Date.parse(r.postedAt));
 // Interpret retained original text only. No translation, probability or collection-time inference.
 export function interpretResetDirective(record) {
  if(!trusted(record))return null;
@@ -44,6 +44,7 @@ export function interpretResetDirective(record) {
 
 export function annotateResetPlan(record) {
  if(!record||typeof record!=='object')return record;
+ if(record.visibilityOnly)return {...record,category:'post',resetType:'unknown',resetTypes:[],resetAt:null,scheduledAt:null};
  const directive=interpretResetDirective(record);
  if(directive?.kind==='scheduled')return {...record,category:'schedule',scheduledAt:directive.scheduledAt,resetAt:null,resetType:directive.scope,resetTypes:[directive.scope]};
  if(directive?.kind==='cancelled')return {...record,category:'post',scheduledAt:null,resetAt:null};

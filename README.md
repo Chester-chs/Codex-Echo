@@ -110,9 +110,9 @@ Bark 的「重置公告」开关同时控制新计划提醒，消息会写明「
 
 ## 数据说明
 
-公告条数不是你的账号额度或实际重置次数，发布时间不一定是完成时间。概率来自 AIPlanWatch 的公开来源评估，不是 OpenAI 官方承诺。免费公开来源收录的推文可能存在遗漏。重置相关推文通常几分钟内更新；与重置无关的推文可能推迟，最长约一天（codex-reset.com 接口只提供重置相关推文，其他推文依赖每天更新一次的 follow-builders）。
+公告条数不是你的账号额度或实际重置次数，发布时间不一定是完成时间。概率来自 AIPlanWatch 的公开来源评估，不是 OpenAI 官方承诺。免费公开来源收录的推文可能存在遗漏。推文同时读取 codex-reset.com /api/feed 的 tweets（公告）与可选的 radar_context（近期普通动态），并补充其公开文字归档和 follow-builders。当前云端约每 10 分钟采集一次；实际显示还受上游更新、缓存和来源可用性影响，没有“最多延迟一天”的保证。归档仅补充公开可取得的文字，不保证涵盖全部历史、图片、视频、引用或转发。新增普通动态仅供展示，不作为重置确认、重置预测或 Bark 推送依据。
 
-来源包括 [Data: codex-reset.com](https://codex-reset.com)（公开 X API 推文镜像、已确认重置记录及严格校验的确认事件）、[AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。GitHub 自助版独立执行个人推送，仍读取本项目共享的公开数据服务。各平台额度和可用性可能变化。
+来源包括 [Data: codex-reset.com](https://codex-reset.com)（公开推文接口、[文字归档](https://codex-reset.com/tibo/x)、已确认重置记录及严格校验的确认事件）、[AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。GitHub 自助版独立执行个人推送，仍读取本项目共享的公开数据服务。各平台额度和可用性可能变化。
 
 <details>
 <summary>开发者：源码与本地构建</summary>

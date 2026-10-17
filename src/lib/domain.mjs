@@ -32,6 +32,7 @@ export function normalizeFeed(payload, now = Date.now()) {
             : null,
           scheduledAt:validDate(item.scheduledAt)?item.scheduledAt:null,
           category:item.category,
+          visibilityOnly:item.visibilityOnly===true,
           type: item.category==='schedule'?'scheduled':["automatic", "banked"].includes(item.resetType)
             ? item.resetType
             : "unknown",

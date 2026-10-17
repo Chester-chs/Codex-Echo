@@ -1,6 +1,6 @@
 export const messages = {
   zh: {
-    text_codexreset: '原文由 codex-reset.com 的公开 X API 镜像提供，原帖链接保留如下。',
+    text_codexreset: '原文由 codex-reset.com 的公开接口或文字归档提供，原帖链接保留如下。',
     codexResetCredit: '数据 / Data: codex-reset.com',
     scheduled:'重置计划',
     siteName: 'Codex 回响',
@@ -154,8 +154,8 @@ export const messages = {
     checked: "本次获取",
     polled: "来源最后检查",
     coverage:
-      "默认来源仅覆盖部分公告，可能有遗漏或延迟。没有收录，不等于没有发生。",
-    postDelayNote: "重置相关推文通常几分钟内更新；与重置无关的推文可能推迟，最长约一天。",
+      "公开来源仅覆盖部分公告与推文，可能有遗漏或延迟。没有收录，不等于没有发生。",
+    postDelayNote: "推文来自公开接口与归档，包含重置消息和部分日常动态；更新可能延迟或遗漏，并非完整、实时的 X 时间线。",
     reminderTitle: "把值得关注的消息，交给提醒。",
     reminderSubtitle: "选择你关心的信号，保留自己的节奏。",
     reminderCta: "设置我的提醒",
@@ -216,7 +216,7 @@ export const messages = {
     feedCount: "当前来源",
   },
   en: {
-    text_codexreset: 'Text supplied by the public X API mirror at codex-reset.com. The original X link is retained below.',
+    text_codexreset: 'Text supplied by the public feed or text archive at codex-reset.com. The original X link is retained below.',
     codexResetCredit: 'Data: codex-reset.com',
     scheduled:'Planned reset',
     siteName: 'Codex Echo',
@@ -377,8 +377,8 @@ export const messages = {
     checked: "Last retrieved",
     polled: "Source last checked",
     coverage:
-      "The default source covers only some announcements and may be delayed. An absent record does not mean an event did not happen.",
-    postDelayNote: "Reset-related posts usually appear within minutes; posts unrelated to resets may be delayed by up to about a day.",
+      "Public sources cover only some announcements and posts, with possible gaps and delays. An absent record does not mean an event did not happen.",
+    postDelayNote: "Posts come from public feeds and archives, including reset news and some everyday updates. Updates can be delayed or missing; this is not a complete, live X timeline.",
     reminderTitle: "Let the important updates come to you.",
     reminderSubtitle: "Choose your signals. Stay in your flow.",
     reminderCta: "Set up notifications",

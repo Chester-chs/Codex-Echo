@@ -17,5 +17,5 @@ export function displayText(record,language='zh') {
 }
 
 export function sourceTextKey(record){
- return record?.textStatus==='mirror'&&record.textSource==='https://codex-reset.com/api/feed'?'text_codexreset':'text_'+record?.textStatus;
+ return record?.textStatus==='mirror'&&['https://codex-reset.com/api/feed','https://codex-reset.com/tibo/x'].includes(record.textSource)?'text_codexreset':'text_'+record?.textStatus;
 }

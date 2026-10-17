@@ -1,4 +1,4 @@
-import {fetchCodexReset,parseCodexResetFeed,parseCodexResetTimeline} from './codex-reset.mjs';
+import {CODEX_RESET,fetchCodexReset,parseCodexResetFeed,parseCodexResetTimeline,parseCodexResetArchive} from './codex-reset.mjs';
 import {load} from 'cheerio';
 import {BUILDERS_FEED,parseBuilderFeed} from './tweets.mjs';
 import {annotateResetPlan} from '../src/lib/reset-plan.mjs';
@@ -101,9 +101,12 @@ export function mergeRecords(...groups) {
   const original=prefer||retainedMention?record.original:previous.original;
   const category=['reset','forecast','post'].find(kind=>[previous.category,record.category].includes(kind))||'post';
   const translation=record.original===original&&record.translation?record.translation:previous.original===original?previous.translation||'':'';
-  map.set(record.id,{...previous,...record,resetType:record.resetType==='unknown'?previous.resetType:record.resetType,category,original,translation,textStatus:prefer?record.textStatus:previous.textStatus,textSource:prefer?record.textSource:previous.textSource,postedAt:previous.timeBasis==='api'?previous.postedAt:record.postedAt,timeBasis:previous.timeBasis==='api'?'api':record.timeBasis,detectedAt:record.detectedAt||previous.detectedAt});
+  // Display-only duplicates cannot suppress real announcements or promote ordinary posts.
+  const visibilityOnly=(previous.visibilityOnly===true||record.visibilityOnly===true)&&![previous,record].some(r=>!r.visibilityOnly&&(['reset','forecast','schedule'].includes(r.category)||r.textSource===CODEX_RESET+'/api/feed'));
+  const metadata=record.visibilityOnly&&!visibilityOnly?previous:record;
+  map.set(record.id,{...previous,...metadata,visibilityOnly,resetType:record.resetType==='unknown'?previous.resetType:record.resetType,category,original,translation,textStatus:prefer?record.textStatus:previous.textStatus,textSource:prefer?record.textSource:previous.textSource,postedAt:previous.timeBasis==='api'?previous.postedAt:record.postedAt,timeBasis:previous.timeBasis==='api'?'api':record.timeBasis,detectedAt:record.detectedAt||previous.detectedAt});
  }
- return [...map.values()].map(record=>annotateResetPlan(postId(record.url)===record.id&&reviewedAnnouncements[record.id]?{...record,...reviewedAnnouncements[record.id],classificationBasis:'reviewed-original'}:record));
+ return [...map.values()].map(record=>annotateResetPlan(!record.visibilityOnly&&postId(record.url)===record.id&&reviewedAnnouncements[record.id]?{...record,...reviewedAnnouncements[record.id],classificationBasis:'reviewed-original'}:record));
 }
 export async function fetchText(url,{fetcher=fetch,headers={}}={}) {
  const response=await fetcher(url,{headers:{'User-Agent':'PulseRadar/0.2 (public-source-monitor)',...headers},signal:AbortSignal.timeout(15000),redirect:'manual'});
@@ -123,9 +126,10 @@ export async function collectPublicSources({fetcher=fetch,now=new Date().toISOSt
   (async()=>parseWatch(await request(RADAR+'/'),now))(),
   (async()=>parseBuilderFeed(JSON.parse(await request(BUILDERS_FEED)),now))(),
   (async()=>parseCodexResetFeed(await codexRequest('/api/feed'),Date.parse(now)))(),
-  (async()=>parseCodexResetTimeline(await codexRequest('/api/timeline')))()
+  (async()=>parseCodexResetTimeline(await codexRequest('/api/timeline')))(),
+  (async()=>parseCodexResetArchive(await codexRequest('/tibo/x'),Date.parse(now)))()
  ]);
- const names=['tokenusage','history','timeline','watch','builders','codexreset-feed','codexreset-timeline'];
+ const names=['tokenusage','history','timeline','watch','builders','codexreset-feed','codexreset-timeline','codexreset-archive'];
  results.forEach((r,i)=>{sources.push({name:names[i],status:r.status==='fulfilled'?'ok':'error',checkedAt:now});if(r.status==='fulfilled'){if(i===3)forecast=r.value;else groups.push(r.value);}else console.warn(JSON.stringify({event:'source_error',source:names[i],message:String(r.reason?.message||'Unknown error').slice(0,180)}));});
  return {records:mergeRecords(...groups),forecast,sources,checkedAt:now};
 }
