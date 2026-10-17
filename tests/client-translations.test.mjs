@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createClientTranslator} from '../src/lib/client-translations.mjs';
 test('browser fallback translates missing Chinese once across feed clones while preserving originals',async()=>{
  let calls=0,saved;const service=createClientTranslator({translate:async text=>{calls++;return '中文：'+text;},save:cache=>{saved=cache;}});
@@ -15,3 +16,4 @@ test('browser fallback remains quiet in English, bounds work and backs off after
  await service.apply(feed,'zh');assert.equal(calls,3);
  await service.apply({posts:feed.posts.slice(0,3)},'zh');assert.equal(calls,3);assert.ok(feed.posts.every(r=>!r.translation));
 });
+test('mirror provenance distinguishes Codex Reset, FxEmbed and missing text in both languages',async()=>{const content=await import('../src/lib/localized-content.mjs');const {messages}=await import('data:text/javascript,'+encodeURIComponent(readFileSync(new URL('../src/lib/i18n.js',import.meta.url),'utf8')));assert.equal(typeof content.sourceTextKey,'function');const key=content.sourceTextKey({textStatus:'mirror',textSource:'https://codex-reset.com/api/feed'});assert.equal(key,'text_codexreset');for(const lang of ['zh','en']){assert.match(messages[lang][key],/codex-reset\.com/);assert.ok(!messages[lang][key].includes('FxEmbed'));}assert.equal(content.sourceTextKey({textStatus:'mirror',textSource:'https://api.fxtwitter.com'}),'text_mirror');assert.equal(content.sourceTextKey({textStatus:'missing',textSource:'https://codex-reset.com/api/timeline'}),'text_missing');});

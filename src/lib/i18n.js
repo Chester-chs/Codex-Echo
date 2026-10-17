@@ -1,5 +1,6 @@
 export const messages = {
   zh: {
+    text_codexreset: '原文由 codex-reset.com 的公开 X API 镜像提供，原帖链接保留如下。',
     codexResetCredit: '数据 / Data: codex-reset.com',
     scheduled:'重置计划',
     siteName: 'Codex 回响',
@@ -214,6 +215,7 @@ export const messages = {
     feedCount: "当前来源",
   },
   en: {
+    text_codexreset: 'Text supplied by the public X API mirror at codex-reset.com. The original X link is retained below.',
     codexResetCredit: 'Data: codex-reset.com',
     scheduled:'Planned reset',
     siteName: 'Codex Echo',

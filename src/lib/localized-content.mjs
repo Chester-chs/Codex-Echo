@@ -15,3 +15,7 @@ export function localizedWindow(value,language='zh') {
 export function displayText(record,language='zh') {
  return language==='zh'?chineseText(record.original||record.context,record.translation):record.original||record.context||'Original text unavailable';
 }
+
+export function sourceTextKey(record){
+ return record?.textStatus==='mirror'&&record.textSource==='https://codex-reset.com/api/feed'?'text_codexreset':'text_'+record?.textStatus;
+}

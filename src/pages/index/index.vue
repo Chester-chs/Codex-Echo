@@ -680,7 +680,7 @@
             ><view v-if="settings.language==='zh'" class="translation-block"><text class="field-label">{{ t('translation') }}</text><text>{{ displayText(focusedRecord,'zh') }}</text><text class="translation-caption">中文译文仅供理解，原帖为准。</text></view>
             <details v-if="settings.language==='zh'" class="original-disclosure"><summary>展开原文</summary><view class="quote-block"><text>{{ focusedRecord.original || t('originalMissing') }}</text></view></details>
             <view v-else><text class="field-label">{{ t('original') }}</text><view class="quote-block"><text>{{ focusedRecord.original || t('originalMissing') }}</text></view></view>
-            <view v-if="mode !== 'demo'" class="source-quality" :class="focusedRecord.textStatus"><AppIcon name="info"/><text>{{ t('text_'+focusedRecord.textStatus) }}</text></view>
+            <view v-if="mode !== 'demo'" class="source-quality" :class="focusedRecord.textStatus"><AppIcon name="info"/><text>{{ t(sourceTextKey(focusedRecord)) }}</text></view>
             <view v-if="focusedRecord.context" class="translation-block"><text class="field-label">{{ t('sourceContext') }}</text><text>{{ settings.language==='zh'?chineseText(focusedRecord.context):focusedRecord.context }}</text></view>
             <view v-if="focusedRecord.classificationNote" class="source-quality"><text>{{ t('classificationInfo') }}：{{ settings.language==='zh'?focusedRecord.classificationNoteZh:focusedRecord.classificationNote }}</text></view><text v-if="focusedRecord.timeBasis === 'post-id'" class="small muted">{{ t('postTimeDerived') }}</text
             ><view class="detail-fields"
@@ -838,7 +838,7 @@ import ResetOverview from "../../components/ResetOverview.vue";
 import BarkSubscription from "../../components/BarkSubscription.vue";
 // #endif
 import { messages } from "../../lib/i18n";
-import {displayText,chineseText} from "../../lib/localized-content.mjs";
+import {displayText,chineseText,sourceTextKey} from "../../lib/localized-content.mjs";
 import { config } from "../../config";
 import {
   normalizeFeed,
