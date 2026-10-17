@@ -950,7 +950,7 @@ async function refresh() {
   clientTranslator.apply(feed.value,settings.language);
   if(webArmed.value)checkWebNotices();
   // #endif
-  if(entry.record){const r=[...records.value,...signals.value].find(r=>r.id===entry.record);if(r)openDetail(r);entry={};}
+  if(entry.record){const r=[...records.value,...signals.value,...(feed.value.posts||[])].find(r=>r.id===entry.record);if(r){openDetail(r);entry={};}}
   if(entry.forecast){showForecast.value=Boolean(forecast.value);entry={};}
 }
 function navigate(value) {

@@ -12,7 +12,7 @@ function loadWebUi(extra={}){
  const script=lines.join('\n').replace(/import\s+[\s\S]*?\s+from\s+["'][^"']+["'];?/g,'');
  const deps={...Vue,...domain,createWebMonitor,canUsePageNotifications,createClientTranslator,config:{},messages:{zh:{},en:{}},onLoad:()=>{},onShow:()=>{},onHide:()=>{},onMounted:()=>{},onUnmounted:()=>{},document:{documentElement:{}},uni:{getStorageSync:()=>({})}};
  Object.assign(deps,extra);const names=Object.keys(deps).filter(n=>/^[\w$]+$/.test(n)&&n!=='default');
- return new Function('deps',`const {${names.join(',')}}=deps;\n${script}\nreturn {openWebNotice,openDetail,focusedRecord,feed,forecastHistory,showForecastHistory};`)(deps);
+ return new Function('deps',`const {${names.join(',')}}=deps;\n${script}\nreturn {refresh,openWebNotice,openDetail,focusedRecord,feed,forecastHistory,showForecastHistory};`)(deps);
 }
 test('opening a prior forecast alert shows its saved snapshot even when the current forecast expired',()=>{
  const c=loadWebUi();
@@ -24,4 +24,16 @@ test('opening an uncached post outside the visible feed translates the modal rec
  const c=loadWebUi({createClientTranslator:options=>createClientTranslator({...options,translate:async()=> '这是一条新推文'})});
  const record={id:'outside',original:'New post outside the current feed'};await c.openDetail(record);
  assert.equal(c.focusedRecord.value.translation,'这是一条新推文');assert.equal(record.original,'New post outside the current feed');
+});
+
+test('a cold notification link opens a matching general post from the collected feed',async()=>{
+ let load;const post={id:'2111244596131111253',type:'post',original:'Day 12/',textStatus:'mirror'};
+ const c=loadWebUi({onLoad:fn=>{load=fn;},fetchFeed:async()=>({feed:{records:[],signals:[],posts:[post],sources:[]},mode:'live',checkedAt:new Date().toISOString()})});
+ load({record:post.id});await c.refresh();assert.equal(c.focusedRecord.value?.id,post.id);
+});
+
+test('a notification target stays pending until source collection makes its record available',async()=>{
+ let load,available=false;const post={id:'2111244596131111253',type:'automatic',original:'Completed'};
+ const c=loadWebUi({onLoad:fn=>{load=fn;},fetchFeed:async()=>({feed:{records:available?[post]:[],signals:[],posts:available?[post]:[],sources:[]},mode:'live',checkedAt:new Date().toISOString()})});
+ load({record:post.id});await c.refresh();assert.equal(c.focusedRecord.value,null);available=true;await c.refresh();assert.equal(c.focusedRecord.value?.id,post.id);
 });
