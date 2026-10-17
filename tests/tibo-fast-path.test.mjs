@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
-import worker,{syncPublic} from '../web/worker.mjs';
+import worker,{syncPublic,handleRequest} from '../web/worker.mjs';
 import * as tweets from '../web/tibo-alerts.mjs';
 import {discoverCodexReset} from '../web/codex-alerts.mjs';
 import {runVisitorBark,consumeBarkBatch,sealDevice} from '../web/visitor-bark.mjs';
@@ -138,4 +138,18 @@ test('a thread plan supersedes pending commitment, but adds detail after an alre
 test('complete minute cron respects Free D1 budget with many records and multiple recipients',async t=>{
  const e=await setup({count:5}),rows=Array.from({length:1000},(_,i)=>record('The reset is complete.',String(2117536046041595900n+BigInt(i)),NOW-1000-i)),upstream=source(feed(rows)),sent=[];
  const before=e.NOTIFY_DB.queries;await worker.scheduled({cron:'* * * * *'},e,{}, {now:NOW,...upstream,send:async j=>{sent.push(j);return {state:'sent'};}});const used=e.NOTIFY_DB.queries-before;assert.ok(used<=48,used+' queries');assert.ok(sent.length>=1);t.diagnostic('Minute D1 queries: '+used);
+});
+
+test('confirmed provider events reach the public page without KV writes or duplicate Bark sends',async()=>{
+ const e=await setup(),p=record(),sent=[],send=async j=>{sent.push(j);return {state:'sent',code:'provider_accepted'};};
+ await worker.scheduled({cron:'* * * * *'},e,{}, {now:NOW,...source(feed([p])),send});const writes=e.writes;
+ const alert={id:p.id,kind:'reset',state:'confirmed',source_at:iso(NOW+30000),summary:'Observed reset; awaiting Tibo',url:p.url,confirmation_source:'operator_observed',observed_at:iso(NOW+30000)};
+ for(const now of [NOW+60000,NOW+120000])await worker.scheduled({cron:'* * * * *'},e,{}, {now,...source(feed([p]),alert),send});
+ const response=await handleRequest(new Request('https://radar.test/api/feed'),e,{},NOW+120000),body=await response.json();assert.equal(response.status,200);assert.equal(body.resetConfirmation.confirmationSource,'operator_observed');assert.equal(body.resetConfirmation.id,p.id);assert.equal(e.writes,writes);assert.equal(sent.length,2);assert.equal(sent.filter(j=>j.kind==='alert'&&j.event.state==='confirmed').length,1);
+});
+
+test('an older provider observation cannot downgrade the same event after Tibo confirmation',async()=>{
+ const e=await setup(),p=record(),observed={id:p.id,kind:'reset',state:'confirmed',source_at:iso(NOW-1000),summary:'Observed reset',url:p.url,confirmation_source:'operator_observed',observed_at:iso(NOW-1000)},official={...observed,confirmation_source:'tibo_confirmed',confirmed_at:iso(NOW+1000),confirmation_url:p.url};
+ for(const [index,alert] of [observed,official,observed].entries())await discoverCodexReset(e,{now:NOW+index*60000,...source(feed(),alert)});
+ const response=await handleRequest(new Request('https://radar.test/api/feed'),e,{},NOW+120000);assert.equal((await response.json()).resetConfirmation.confirmationSource,'tibo_confirmed');
 });

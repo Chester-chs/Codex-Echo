@@ -1,14 +1,15 @@
 import {parseCodexResetFeed,parseCodexResetArchive} from '../backend/codex-reset.mjs';
 import {mergeRecords} from '../backend/sources.mjs';
-import {classifyTiboPost,tiboReplyContext,resetNoticeKey,annotateResetPlan} from '../src/lib/reset-plan.mjs';
+import {classifyTiboPost,tiboReplyContext,resetNoticeKey,annotateResetPlan,normalizeResetConfirmation} from '../src/lib/reset-plan.mjs';
 import {archivedTranslations} from '../src/lib/translations-zh.mjs';
 import {readProvider} from './provider-budget.mjs';
 import {translatePublicText} from '../backend/translate.mjs';
 const iso=n=>new Date(n).toISOString(),FENCE='tibo-posts:baseline:v1',CONTEXT='tibo-posts:context:v1';
-export async function tiboContext(db,state){
- const row=await db.prepare('SELECT value FROM bark_meta WHERE name=?').bind(CONTEXT).first();
- let posts=[];try{const value=JSON.parse(row?.value||'[]');if(Array.isArray(value))posts=value;}catch{}
- return {...state,records:mergeRecords(state?.records||[],posts)};
+export async function tiboContext(db,state,now=Date.now()){
+ const rows=(await db.prepare("SELECT name,value FROM bark_meta WHERE name IN(?, 'codex-reset:confirmation:v1')").bind(CONTEXT).all()).results;
+ let posts=[],confirmation=null;try{const value=JSON.parse(rows.find(r=>r.name===CONTEXT)?.value||'[]');if(Array.isArray(value))posts=value;}catch{}
+ try{confirmation=normalizeResetConfirmation(JSON.parse(rows.find(r=>r.name==='codex-reset:confirmation:v1')?.value||'null'),now);}catch{}
+ return {...state,records:mergeRecords(state?.records||[],posts),resetConfirmation:confirmation||state?.resetConfirmation||null};
 }
 export async function discoverTiboPosts(env,{now=Date.now(),fetcher=fetch,translate=text=>translatePublicText(text,{fetcher:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(3000)})}),log=x=>console.log(JSON.stringify(x))}={}){
  if(!env.NOTIFY_DB||env.BARK_VISITORS_ENABLED!=='true')return null;

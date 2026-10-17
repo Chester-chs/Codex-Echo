@@ -5,7 +5,7 @@
     :class="{ english: settings.language === 'en', 'is-weixin': isWeixin }"
   >
     <!-- #ifdef H5 -->
-    <ResetOverview :posts="feed.posts || []" :records="records" :signals="signals" :forecast="forecast" :mode="mode" :checkedAt="checkedAt" :now="now" :settings="settings" :t="t" :time="time" :zoneName="zoneName" :loading="loading" :webArmed="webArmed" @zone="cycleZone" @language="toggleLanguage" @settings="showSettings=true" @refresh="refresh" @detail="openDetail" @forecast="showForecast=true" @archive="openForecastHistory" @about="showAbout=true">
+    <ResetOverview :resetConfirmation="feed.resetConfirmation" :posts="feed.posts || []" :records="records" :signals="signals" :forecast="forecast" :mode="mode" :checkedAt="checkedAt" :now="now" :settings="settings" :t="t" :time="time" :zoneName="zoneName" :loading="loading" :webArmed="webArmed" @zone="cycleZone" @language="toggleLanguage" @settings="showSettings=true" @refresh="refresh" @detail="openDetail" @forecast="showForecast=true" @archive="openForecastHistory" @about="showAbout=true">
       <template #cloud-notifications><BarkSubscription :language="settings.language" /></template>
       <template #notifications>
         <view  class="alerts-grid"

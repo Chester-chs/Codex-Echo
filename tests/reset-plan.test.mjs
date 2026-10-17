@@ -93,3 +93,24 @@ test('Bark distinguishes a planned reset from completed activity in both languag
   assert.ok(payload.body.includes('18:00'));assert.ok(payload.body.includes('2026/10/18 01:00'));assert.doesNotMatch(payload.body,/实际重置时间\n|Actual reset time\n/);
  }
 });
+
+const observation=(plan,at)=>({id:plan.id,kind:'reset',state:'confirmed',sourceAt:new Date(at).toISOString(),url:plan.url,confirmationSource:'operator_observed',observedAt:new Date(at).toISOString(),summary:'Observed by provider'});
+test('provider observation stops a matching plan countdown without claiming Tibo confirmed',()=>{
+ const r=post('We will reset in 5 hours.'),event=observation(r,now+3600000),f=normalizeFeed({resets:[r],posts:[r],resetConfirmation:event},now+3600000);
+ const p=api.getResetPlanState(f.posts,now+3600000,f.resetConfirmation);assert.equal(p.phase,'observed');assert.equal(p.remainingMs,0);assert.equal(p.observation.observedAt,'2026-10-17T13:00:00.000Z');assert.equal(p.confirmation,null);assert.equal(f.records.length,1);
+ assert.equal(api.isCurrentPlanNotice({...r,scheduledAt:'2026-10-17T17:00:00.000Z'},f.posts,now+3600000,f.resetConfirmation),false);
+});
+test('observations cannot resolve unrelated, future, older or cancelled plans',()=>{
+ const r=post('We will reset in 5 hours.'),event=observation(r,now+3600000);
+ for(const extra of [{id:'2117536046041595999'},{sourceAt:new Date(now+7200000).toISOString(),observedAt:new Date(now+7200000).toISOString()},{sourceAt:new Date(now-1000).toISOString(),observedAt:new Date(now-1000).toISOString()},{confirmationSource:'untrusted'},{observedAt:null}])assert.equal(api.getResetPlanState([r],now+3600000,{...event,...extra}).phase,'scheduled');
+ const cancel=post('The reset is cancelled.',60000,'2117536046041595906');assert.equal(api.getResetPlanState([r,cancel],now+3600000,event).phase,'cancelled');
+ const next=post('We will reset in 8 hours.',120000,'2117536046041595907');assert.equal(api.getResetPlanState([r,next],now+3600000,event).phase,'scheduled');
+});
+test('a later Tibo confirmation upgrades provider observation to completed',()=>{
+ const r=post('We will reset in 5 hours.'),event=observation(r,now+3600000),done=post('The reset is complete.',3600001,'2117536046041595905');assert.equal(api.getResetPlanState([r,done],now+3700000,event).phase,'completed');
+ const official={...event,confirmationSource:'tibo_confirmed',confirmedAt:new Date(now+3600000).toISOString(),confirmationUrl:done.url};assert.equal(api.getResetPlanState([r],now+3700000,official).phase,'completed');
+});
+
+test('malformed optional confirmation never hides an otherwise valid feed',()=>{
+ const r=post('We will reset in 5 hours.');for(const bad of [{...observation(r,now+1000),url:42},{...observation(r,now+1000),confirmationSource:'unknown'},[],null]){const f=normalizeFeed({resets:[r],resetConfirmation:bad},now+1000);assert.equal(f.records.length,1);assert.equal(f.resetConfirmation,null);}
+});

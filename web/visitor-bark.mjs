@@ -140,7 +140,7 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
  if(!configured(env)||env.BARK_ENABLED!=='true')return {state:'disabled'};
  env={...env,NOTIFY_DB:countingDb(env.NOTIFY_DB)};
  const clock=typeof now==='function'?now:()=>now,n=clock(),db=env.NOTIFY_DB,token=crypto.randomUUID();
- state=await tiboContext(db,state||{});
+ state=await tiboContext(db,state||{},n);
  await ensureOwnerSubscription(env,n);
  await db.prepare('INSERT OR IGNORE INTO bark_control(id) VALUES(?)').bind(LOCK).run();
  const lease=await db.prepare('UPDATE bark_control SET lease_token=?,lease_until=? WHERE id=? AND lease_until<=?').bind(token,n+LEASE,LOCK,n).run();if(!lease.meta.changes)return {state:'busy'};
@@ -167,7 +167,7 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
   }
   await db.prepare(`UPDATE bark_events AS e SET state='cancelled',code=CASE WHEN e.kind='alert' THEN 'covered_by_earlier_alert' ELSE 'covered_by_codex_reset' END,updated=? WHERE state IN('pending','retry') AND ((${coveredSQL}) OR (${completionCoveredSQL}))`).bind(n,...coverageTimes(n),n-21600000).run();
   if((state.records||[]).some(r=>r.category==='schedule')){
-   const plan=getResetPlanState(state.records,n),current=plan?.phase==='scheduled'?plan:null;
+   const plan=getResetPlanState(state.records,n,state.resetConfirmation),current=plan?.phase==='scheduled'?plan:null;
    await db.prepare(`UPDATE bark_events SET state='cancelled',code='superseded_or_cancelled',updated=? WHERE state IN('pending','retry') AND (json_extract(payload,'$.category')='schedule' OR json_extract(payload,'$.tweetClass')='plan') AND (json_extract(payload,'$.id')!=? OR json_extract(payload,'$.scheduledAt')!=?)`).bind(n,current?.record.id||'',current?.scheduledAt||'').run();
   }
   if(env.BARK_QUEUE)return {state:fresh?'checked':'source_stale',...await enqueuePendingBark(env,n)};
@@ -175,7 +175,7 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
   const rows=(await db.prepare(`WITH ranked AS(SELECT e.*,s.device_cipher,s.token_hash,s.revision,s.reset_alerts,s.forecast_alerts,s.threshold,s.language,s.last_served,ROW_NUMBER() OVER(PARTITION BY e.recipient ORDER BY CASE e.kind WHEN 'test' THEN 0 WHEN 'alert' THEN 1 WHEN 'reset' THEN 2 ELSE 3 END,e.created) AS rank
    FROM bark_events e JOIN bark_subscriptions s ON s.device_hash=e.recipient WHERE e.state IN('pending','retry') AND e.available<=? AND COALESCE((SELECT attempts FROM bark_daily WHERE recipient=e.recipient AND day=?),0)<20)
    SELECT * FROM ranked WHERE rank=1 ORDER BY CASE kind WHEN 'test' THEN 0 WHEN 'alert' THEN 1 WHEN 'reset' THEN 2 ELSE 3 END,last_served,created,recipient LIMIT 20`).bind(n,day).all()).results;
-  const eligible=(r,time)=>r.kind==='test'?time-r.created<900000:r.kind==='alert'?r.reset_alerts&&alertEligible(r.event,state,time):ready(state,time)&&(r.kind==='reset'?r.reset_alerts&&time-Date.parse(r.event.postedAt)<21600000&&isCurrentPlanNotice(r.event,state.records||[],time):r.forecast_alerts&&r.event_key===currentKey&&forecast&&forecast.probability>=r.threshold&&getForecast(forecast,time));
+  const eligible=(r,time)=>r.kind==='test'?time-r.created<900000:r.kind==='alert'?r.reset_alerts&&alertEligible(r.event,state,time):ready(state,time)&&(r.kind==='reset'?r.reset_alerts&&time-Date.parse(r.event.postedAt)<21600000&&isCurrentPlanNotice(r.event,state.records||[],time,state.resetConfirmation):r.forecast_alerts&&r.event_key===currentKey&&forecast&&forecast.probability>=r.threshold&&getForecast(forecast,time));
   for(const r of rows)r.event=JSON.parse(r.payload);
   const invalid=rows.filter(r=>!eligible(r,clock())).map(r=>({id:r.recipient,key:r.event_key,attempts:r.attempts}));
   if(invalid.length)await db.prepare(`UPDATE bark_events SET state='cancelled',code='disabled_or_expired',updated=? WHERE state IN('pending','retry') AND EXISTS(SELECT 1 FROM json_each(?) j WHERE json_extract(j.value,'$.id')=recipient AND json_extract(j.value,'$.key')=event_key AND json_extract(j.value,'$.attempts')=attempts) AND ${fence}`).bind(clock(),JSON.stringify(invalid),LOCK,token,clock()).run();
@@ -237,19 +237,19 @@ const coveredSQL=`e.kind='reset' AND json_extract(e.payload,'$.category')!='sche
 const awaitingSQL=coveredSQL.replace("a.state='sent'","a.state IN('pending','retry','sending')");
 // A correlated claim prevents two Queue consumers from simultaneously sending completion alerts.
 const completionClaim=`NOT (((bark_events.kind='alert' AND json_extract(bark_events.payload,'$.state')='confirmed') OR (bark_events.kind='reset' AND COALESCE(json_extract(bark_events.payload,'$.completionNotice'),0)=1)) AND EXISTS(SELECT 1 FROM bark_events a WHERE a.recipient=bark_events.recipient AND a.event_key!=bark_events.event_key AND ((a.kind='alert' AND json_extract(a.payload,'$.state')='confirmed') OR (a.kind='reset' AND json_extract(a.payload,'$.category')!='schedule' AND (json_extract(a.payload,'$.completionNotice')=1 OR json_extract(a.payload,'$.id')=json_extract(bark_events.payload,'$.id')))) AND a.state IN('sending','sent','unknown') AND a.updated>?))`;
-function alertEligible(event,state,now,baseline=0){return validAlertAt(event,now,baseline)&&(event.tweetClass!=='plan'||isCurrentPlanNotice({...event,category:'schedule'},state.records||[],now));}
+function alertEligible(event,state,now,baseline=0){return validAlertAt(event,now,baseline)&&(event.tweetClass!=='plan'||isCurrentPlanNotice({...event,category:'schedule'},state.records||[],now,state.resetConfirmation));}
 function queueEligible(row,state,now){
  if(row.kind==='test')return now-row.created<900000;
  if(row.kind==='alert')return row.reset_alerts&&alertEligible(row.event,state,now,row.baseline_at);
  if(!ready(state,now))return false;
- if(row.kind==='reset')return row.reset_alerts&&Date.parse(row.event.postedAt)<=now&&now-Date.parse(row.event.postedAt)<21600000&&isCurrentPlanNotice(row.event,state.records||[],now);
+ if(row.kind==='reset')return row.reset_alerts&&Date.parse(row.event.postedAt)<=now&&now-Date.parse(row.event.postedAt)<21600000&&isCurrentPlanNotice(row.event,state.records||[],now,state.resetConfirmation);
  return row.kind==='forecast'&&row.forecast_alerts&&row.event_key===row.currentForecastKey&&getForecast(state.forecast,now)?.probability>=row.threshold;
 }
 export async function consumeBarkBatch(batch,env,{now=Date.now,send=sendBark}={}){
  const db=countingDb(env.NOTIFY_DB),clock=typeof now==='function'?now:()=>now;
  const summary={event:'bark_queue_batch',size:batch.messages.length,sent:0,retried:0,skipped:0,d1Queries:0};
  let state={};try{state=await env.RADAR?.get('public-v1','json')||{};}catch{}
- state=await tiboContext(db,state);
+ state=await tiboContext(db,state,clock());
  const forecast=getForecast(state.forecast,clock()),currentForecastKey=forecast?await forecastKey(forecast):null;
  for(const message of batch.messages){
   if(!db.queryBudget.reserve(9)){message.retry({delaySeconds:0});summary.retried++;continue;}

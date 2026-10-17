@@ -114,6 +114,8 @@ Bark 的「重置公告」开关同时控制新计划提醒，消息会写明「
 
 明确会重置但没有可计算时间时，发送预告提醒。同一串内 10 分钟内出现具体计划时，未发送的预告由计划替代；预告已发送时，仍会再通知具体计划。同一设备在 6 小时内最多收到一次完成提醒，Tibo 确认和来源实测共同去重。首次启用监控或首次绑定不补发历史；后续部署沿用原有监控起点，恢复最近 6 小时内仍符合条件且未发送的公告，并使用同一事件标识去重。升级不会重置订阅、提醒开关或阈值。
 
+网页会将同一条计划对应的来源实测结果显示为“来源实测已重置”，停止倒计时，并注明观测时间与来源；这与 Tibo 发布完成确认分开标注。个人账号额度恢复不作为全局完成依据。
+
 部署及日志验证方法：[每分钟推文发现与 Bark](docs/MINUTE_DISCOVERY.md)。
 
 来源包括 [Data: codex-reset.com](https://codex-reset.com)（公开推文接口、[文字归档](https://codex-reset.com/tibo/x)、已确认重置记录及严格校验的确认事件）、[AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers)、X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。GitHub 自助版独立执行个人推送，仍读取本项目共享的公开数据服务。各平台额度和可用性可能变化。

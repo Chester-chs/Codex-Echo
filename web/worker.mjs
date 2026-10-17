@@ -1,5 +1,5 @@
 import {countingDb} from './query-budget.mjs';
-import {discoverCodexReset} from './codex-alerts.mjs';
+import {discoverCodexReset,publicResetConfirmation} from './codex-alerts.mjs';
 import {readProvider} from './provider-budget.mjs';
 import {discoverTiboPosts} from './tibo-alerts.mjs';
 import {sendBark} from './bark.mjs';
@@ -57,7 +57,7 @@ export async function handleRequest(request,env,ctx={},now=Date.now()) {
  try {
   const state=await env.RADAR.get(KEY,'json');
   if(!state)return json({error:'First cloud sync pending'},503);
-  const body=pathname==='/api/feed'?publicFeed(state,now):{forecasts:uniqueForecastHistory(state.history||[])};
+  const body=pathname==='/api/feed'?{...publicFeed(state,now),resetConfirmation:await publicResetConfirmation(env.NOTIFY_DB,now)}:{forecasts:uniqueForecastHistory(state.history||[])};
   return request.method==='HEAD'?new Response(null,{headers}):json(body);
  } catch {return json({error:'Data temporarily unavailable'},503);}
 }

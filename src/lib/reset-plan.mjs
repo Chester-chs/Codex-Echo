@@ -121,24 +121,35 @@ export function annotateResetPlan(record) {
  return record;
 }
 
-export function getResetPlanState(records=[],now=Date.now()) {
+export function normalizeResetConfirmation(value,now=Date.now()) {
+ if(!value||value.kind!=='reset'||value.state!=='confirmed'||!/^\d{15,22}$/.test(value.id||'')||!['operator_observed','tibo_confirmed'].includes(value.confirmationSource))return null;
+ const at=Date.parse(value.sourceAt),evidenceAt=Date.parse(value.confirmationSource==='operator_observed'?value.observedAt:value.confirmedAt);
+ const link=typeof value.url==='string'&&value.url.match(/^https:\/\/(?:x\.com|twitter\.com)\/thsottiaux\/status\/(\d{15,22})$/);
+ if(!Number.isFinite(at)||at>now||!Number.isFinite(evidenceAt)||evidenceAt>now||link?.[1]!==value.id)return null;
+ if(value.confirmationSource==='tibo_confirmed'&&!/^https:\/\/(?:x\.com|twitter\.com)\/thsottiaux\/status\/\d{15,22}$/.test(value.confirmationUrl||''))return null;
+ return Object.fromEntries(['id','kind','state','sourceAt','url','summary','confirmationSource','observedAt','confirmedAt','confirmationUrl'].filter(k=>value[k]!=null).map(k=>[k,value[k]]));
+}
+
+export function getResetPlanState(records=[],now=Date.now(),providerConfirmation=null) {
  const items=records.filter(r=>Date.parse(r.postedAt)<=now).map(record=>({record,directive:interpretResetDirective(record)})).filter(x=>x.directive).sort((a,b)=>Date.parse(b.record.postedAt)-Date.parse(a.record.postedAt));
  const plan=items.find(x=>x.directive.kind==='scheduled'&&now-Date.parse(x.record.postedAt)<7*DAY);
  if(!plan)return null;
  const target=Date.parse(plan.directive.scheduledAt);
  const confirmation=items.find(x=>['completed','cancelled'].includes(x.directive.kind)&&x.directive.scope===plan.directive.scope&&Date.parse(x.record.postedAt)>Date.parse(plan.record.postedAt));
  if(confirmation&&now-Date.parse(confirmation.record.postedAt)>DAY||!confirmation&&now-target>DAY)return null;
- return {record:plan.record,scheduledAt:plan.directive.scheduledAt,approximate:plan.directive.approximate===true,phase:confirmation?.directive.kind||(now>=target?'awaiting':'scheduled'),remainingMs:Math.max(0,target-now),confirmation:confirmation?.record||null};
+ const evidence=normalizeResetConfirmation(providerConfirmation,now),observation=evidence&&evidence.id===plan.record.id&&Date.parse(evidence.sourceAt)>Date.parse(plan.record.postedAt)&&Date.parse(evidence.confirmationSource==='operator_observed'?evidence.observedAt:evidence.confirmedAt)>=Date.parse(plan.record.postedAt)?evidence:null;
+ const phase=confirmation?.directive.kind||(observation?(observation.confirmationSource==='operator_observed'?'observed':'completed'):(now>=target?'awaiting':'scheduled'));
+ return {record:plan.record,scheduledAt:plan.directive.scheduledAt,approximate:plan.directive.approximate===true,phase,remainingMs:phase==='scheduled'?Math.max(0,target-now):0,confirmation:confirmation?.record||null,observation};
 }
 
-export function isCurrentPlanNotice(record,records,now) {
+export function isCurrentPlanNotice(record,records,now,providerConfirmation=null) {
  const current=annotateResetPlan(records.find(r=>r.id===record.id)||record);
  const directive=interpretResetDirective(current);
  if(directive?.kind==='cancelled')return false;
  if(directive?.kind!=='scheduled')return record.category!=='schedule'&&current.category!=='post'&&current.category!=='forecast';
  // Pre-feature generic snapshots cannot safely describe a newly recognized plan.
  if(!record.scheduledAt)return false;
- const state=getResetPlanState(records,now);
+ const state=getResetPlanState(records,now,providerConfirmation);
  return state?.phase==='scheduled'&&state.record.id===record.id&&state.scheduledAt===(record.scheduledAt||directive.scheduledAt);
 }
 

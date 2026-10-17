@@ -114,6 +114,8 @@ Announcement counts are not personal account credits or completed resets. Public
 
 Reset announcements without a calculable time use a commitment alert. A plan in the same thread within 10 minutes supersedes a pending commitment; an already delivered commitment may be followed by the more specific plan. Each device receives at most one completion alert per six-hour window across tweet confirmations and provider observations. First monitor activation and first binding do not replay old posts. Later deployments retain the original monitor start and recover still-eligible, unsent announcements from the past six hours using the same deduplication keys. Upgrades do not reset subscriptions, alert preferences or thresholds.
 
+A matching provider observation stops the plan countdown and is labeled “Reset observed by source”, with its time and evidence link. This is separate from Tibo’s completion confirmation. A personal account recovery is not evidence of a global completion.
+
 Deployment and live-log verification: [Minute discovery and Bark](docs/MINUTE_DISCOVERY.en.md).
 
 Sources include [Data: codex-reset.com](https://codex-reset.com) (public feed, [text archive](https://codex-reset.com/tibo/x), confirmed reset history and strictly validated confirmation events), [AIPlanWatch](https://codex-reset.aiplanwatch.com/), [tokenusage](https://tokenusage.dev/developers), public X embeds and [FxEmbed](https://github.com/FxEmbed/FxEmbed). Personal GitHub notifiers still depend on this project's shared public feed. Free-tier policies and availability can change.

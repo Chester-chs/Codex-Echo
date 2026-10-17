@@ -1,4 +1,4 @@
-import {annotateResetPlan} from './reset-plan.mjs';
+import {annotateResetPlan,normalizeResetConfirmation} from './reset-plan.mjs';
 const DAY = 86400000;
 const validDate = (value) =>
   typeof value === "string" && Number.isFinite(Date.parse(value));
@@ -58,6 +58,7 @@ export function normalizeFeed(payload, now = Date.now()) {
     .sort((a, b) => Date.parse(b.postedAt) - Date.parse(a.postedAt));
   return {
     records,
+    resetConfirmation:normalizeResetConfirmation(payload.resetConfirmation,now),
     posts: Array.isArray(payload.posts) ? normalizeFeed({resets:payload.posts},now).records.map(r=>({...r,type:r.category==='schedule'?'scheduled':r.category==='forecast'?'forecastSignal':r.category==='reset'?r.type:'post'})) : [...records,...(Array.isArray(payload.signals)&&payload.signals.length?normalizeFeed({resets:payload.signals},now).records.map(r=>({...r,type:'forecastSignal'})):[])].sort((a,b)=>Date.parse(b.postedAt)-Date.parse(a.postedAt)),
     generatedAt: validDate(payload.generatedAt) ? payload.generatedAt : null,
     lastPolledAt: validDate(payload.lastPolledAt) ? payload.lastPolledAt : null,
