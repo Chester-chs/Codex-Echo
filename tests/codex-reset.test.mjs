@@ -43,11 +43,11 @@ test('display-only posts survive merge, enrichment and normalization without res
  for(const records of [mergeRecords([real],rows),mergeRecords(rows,[real])])assert.equal(records.find(r=>r.id===real.id).category,'reset');
 });
 
-test('display-only duplicates preserve confirmed reset timing and model samples in either merge order',async()=>{
+test('feed text and display-only duplicates preserve confirmed reset timing and model samples in either merge order',async()=>{
  const {mergeRecords}=await import('../backend/sources.mjs');const {conditionalForecast}=await import('../backend/model.mjs');
  const real=provider.parseCodexResetTimeline(fixture('timeline')).find(r=>r.resetType==='automatic');real.resetAt=real.postedAt;real.firstSeenAt=real.postedAt;real.confirmed=true;
  const archive={...real,visibilityOnly:true,category:'post',resetType:'unknown',resetAt:null,confirmed:undefined,original:'Original post',textStatus:'mirror',textSource:'https://codex-reset.com/tibo/x'};
- for(const records of [mergeRecords([real],[archive]),mergeRecords([archive],[real])]){const merged=records[0];assert.equal(merged.resetAt,real.resetAt);assert.equal(merged.confirmed,true);assert.equal(merged.resetType,'automatic');assert.deepEqual(conditionalForecast(records,now),conditionalForecast([real],now));}
+ for(const visibilityOnly of [true,false])for(const records of [mergeRecords([real],[{...archive,visibilityOnly}]),mergeRecords([{...archive,visibilityOnly}],[real])]){const merged=records[0];assert.equal(merged.resetAt,real.resetAt);assert.equal(merged.confirmed,true);assert.equal(merged.resetType,'automatic');assert.deepEqual(conditionalForecast(records,now),conditionalForecast([real],now));}
 });
 test('fresh X API feed decodes entities, preserves replies and includes Day 12',()=>{
  const rows=provider.parseCodexResetFeed(fixture('feed'),now);const day=rows.find(r=>r.id==='2111244596131111253');

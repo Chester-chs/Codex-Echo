@@ -103,8 +103,9 @@ export function mergeRecords(...groups) {
   const translation=record.original===original&&record.translation?record.translation:previous.original===original?previous.translation||'':'';
   // Display-only duplicates cannot suppress real announcements or promote ordinary posts.
   const visibilityOnly=(previous.visibilityOnly===true||record.visibilityOnly===true)&&![previous,record].some(r=>!r.visibilityOnly&&(['reset','forecast','schedule'].includes(r.category)||r.textSource===CODEX_RESET+'/api/feed'));
-  const metadata=record.visibilityOnly&&!visibilityOnly?previous:record;
-  map.set(record.id,{...previous,...metadata,visibilityOnly,resetType:record.resetType==='unknown'?previous.resetType:record.resetType,category,original,translation,textStatus:prefer?record.textStatus:previous.textStatus,textSource:prefer?record.textSource:previous.textSource,postedAt:previous.timeBasis==='api'?previous.postedAt:record.postedAt,timeBasis:previous.timeBasis==='api'?'api':record.timeBasis,detectedAt:record.detectedAt||previous.detectedAt});
+  const metadata=record.visibilityOnly&&!visibilityOnly?previous:record.category==='post'&&record.confirmed==null&&previous.confirmed?{...record,confirmed:previous.confirmed}:record;
+  const resetAt=record.category==='post'&&record.resetAt==null&&previous.resetAt?previous.resetAt:metadata.resetAt;
+  map.set(record.id,{...previous,...metadata,resetAt,visibilityOnly,resetType:record.resetType==='unknown'?previous.resetType:record.resetType,category,original,translation,textStatus:prefer?record.textStatus:previous.textStatus,textSource:prefer?record.textSource:previous.textSource,postedAt:previous.timeBasis==='api'?previous.postedAt:record.postedAt,timeBasis:previous.timeBasis==='api'?'api':record.timeBasis,detectedAt:record.detectedAt||previous.detectedAt});
  }
  return [...map.values()].map(record=>{
   const parent=map.get(record.inReplyToId);if(parent&&parent.id!==record.id)record={...record,parent:{id:parent.id,url:parent.url,postedAt:parent.postedAt,original:parent.original,resetType:parent.resetType}};
