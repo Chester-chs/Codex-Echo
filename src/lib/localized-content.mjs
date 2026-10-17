@@ -1,9 +1,15 @@
 import {archivedTranslations} from './translations-zh.mjs';
+export function needsChineseTranslation(text='') {
+ const prose=String(text).replace(/https?:\/\/\S+|@[\w]+|\b(?:GPT-[\w.-]+|Codex|ChatGPT(?: Work)?|OpenAI|Tibo|Sol|Astra|Luna|AIPlanWatch|FxEmbed)\b/gi,'');
+ return /\p{L}/u.test(prose)&&!/[\u3400-\u9fff]/.test(text);
+}
 export function chineseText(original,provided='') {
  if(archivedTranslations[original])return archivedTranslations[original];
- if(typeof provided==='string'&&provided.trim()&&(/[\u3400-\u9fff]/.test(provided)||!/[A-Za-z]/.test(provided)))return provided;
+ if(typeof provided==='string'&&provided.trim()&&!provided.includes('中文译文正在准备中')&&(/[\u3400-\u9fff]/.test(provided)||!/[A-Za-z]/.test(provided)))return provided;
  if(typeof original==='string'&&/[\u3400-\u9fff]/.test(original))return original;
- return '中文译文正在准备中，可展开查看原文。';
+ if(typeof original!=='string'||!original.trim())return '暂无可显示的推文原文。';
+ if(!needsChineseTranslation(original))return original;
+ return '【暂无中文译文，以下为原文】\n'+original;
 }
 export function localizedWindow(value,language='zh') {
  if(language!=='zh')return value||'';

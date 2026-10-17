@@ -31,6 +31,16 @@ test('Chinese content never silently falls back to an untranslated English post'
  assert.equal(localizedWindow('within 48h','zh'),'未来 48 小时内');
  assert.equal(localizedWindow('sometime soon','zh'),'具体时间请查看预测依据');
 });
+test('Chinese display preserves mention-only, mathematical and emoji posts without a pending placeholder',()=>{
+ for(const original of ['@ajambrosino 2+2?','@Tibo 🚀','https://x.com/thsottiaux/status/123','Codex GPT-6 100%','123 + 456 = 579'])assert.equal(displayText({original},'zh'),original);
+});
+
+test('missing translations show the original with an explicit Chinese label instead of hiding content',()=>{
+ const original='A newly published update';const result=displayText({original},'zh');assert.ok(result.includes(original));assert.match(result,/暂无中文译文/);assert.ok(!result.includes('正在准备'));
+ assert.equal(displayText({original,translation:'中文译文正在准备中，可展开查看原文。'},'zh'),result);
+ assert.equal(displayText({original:''},'zh'),'暂无可显示的推文原文。');
+});
+
 test('public translation preserves handles and product names and rejects malformed responses',async()=>{
  const fetcher=async request=>{const q=new URL(request).searchParams.get('q');return new Response(JSON.stringify([[[q.replace('Hello','你好'),q]]]),{headers:{'Content-Type':'application/json'}});};
  const result=await translatePublicText('Hello @thsottiaux Codex',{fetcher});
