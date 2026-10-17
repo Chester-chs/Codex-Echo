@@ -14,7 +14,7 @@ These sources are not a complete live X stream. Everyday posts absent upstream c
 - PST/PT/PDT and unqualified EOD use `America/Los_Angeles`, including daylight saving; UTC/GMT use UTC. Relative and deadline language uses “By about”, not a confirmed completion time.
 - Plans share event keys with the slow path. A concrete plan in the same thread within 10 minutes supersedes an unsent commitment; a delivered commitment can still be followed by the more specific plan. Cancelled or superseded pending plans do not send.
 - A device receives at most one completion alert in six hours across tweet confirmations, provider observations and the matching legacy reset path. Uncertain transport outcomes retain the existing handling policy; provider acceptance does not prove Lock Screen delivery.
-- First feature execution creates a separate fence covering direct and legacy insertion, so historical posts are not replayed. Existing subscriptions, device keys, preferences and thresholds stay intact.
+- First monitor activation establishes a persistent start without replaying earlier posts. Later deployments, including a new tweet channel, reuse the active monitor start for both direct and legacy insertion. Still-valid, unsent announcements from the past six hours are recovered only if posted after both monitor activation and device binding. A later feature fence left by the old version no longer hides them. Existing event keys and receipts prevent already-sent plans from repeating; subscriptions, device keys, preferences and thresholds stay intact.
 - Alerts retain original text, self-reply parent text and London/Beijing timestamps. Chinese uses retained translations first; when enabled, at most two short passages receive a bounded free translation attempt. Failures leave an explicit translation-pending message and retain the original.
 
 Tests retain real feed text and parent relationships. The current feed/timeline does not expose reply metadata for “Done and dusted” or the older “Hi. It is done.”, so the project's existing free FxEmbed mirror was also checked: neither is a reply. User-provided excerpts in `tibo-post-cases.json` are kept separate from source snapshots; timeline summaries are never presented as original tweets.
@@ -37,7 +37,7 @@ Tests retain real feed text and parent relationships. The current feed/timeline 
 
    This change does not alter `web/wrangler.jsonc`, subscription schemas or Secrets. It does not require a paid service or a new Queue. Keep the existing minute Cron; the 5/10-minute full-source interval is independent.
 
-3. Publish the frontend build through the existing workflow. The canonical site stays [echo-radar.pages.dev](https://echo-radar.pages.dev/). The first minute run establishes the feature fence and updates display data without replaying historical tweets.
+3. Publish the frontend build through the existing workflow. The canonical site stays [echo-radar.pages.dev](https://echo-radar.pages.dev/). First installation stays silent for earlier posts. Upgrades retain the monitor start and recover still-eligible unsent announcements without repeating sent messages.
 
 ## Verify with live logs
 

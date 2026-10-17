@@ -39,6 +39,42 @@ test('queue configuration enqueues references within the same scheduled call',as
 test('a new deployment fences past tweets while still displaying them',async()=>{
  const e=await setup({baseline:false}),upstream=source(feed([record()]));await tweets.discoverTiboPosts(e,{now:NOW,...upstream,log});assert.equal(e.kv.records.length,1);assert.equal(e.NOTIFY_DB.sql.prepare('SELECT count(*) n FROM bark_events').get().n,0);await runVisitorBark(e,e.kv,{now:NOW,send:()=>assert.fail('Historical plan replayed through legacy path')});assert.equal(e.NOTIFY_DB.sql.prepare('SELECT count(*) n FROM bark_events').get().n,0);
 });
+test('upgrading an active monitor catches a plan published before the first new-code run exactly once',async()=>{
+ for(const oldFeatureFence of [false,true]){
+  const e=await setup(),db=e.NOTIFY_DB.sql;
+  db.prepare("DELETE FROM bark_meta WHERE name='tibo-posts:baseline:v1'").run();
+  if(oldFeatureFence)db.prepare('INSERT INTO bark_meta VALUES(?,?)').run('tibo-posts:baseline:v1',String(NOW-144469));
+  const parent=record('Day 13/ Le limit reset','2111492673890824348',NOW-300000),plan=record('Landing sometime today by EOD PST','2111492738025959922',NOW-288938,{is_reply:true,replying_to:'thsottiaux',in_reply_to_tweet_id:parent.id}),upstream=source(feed([plan,parent])),sent=[];
+  const prefs=db.prepare('SELECT reset_alerts,forecast_alerts,threshold,language,token_hash,device_cipher,revision FROM bark_subscriptions').all();
+  for(const now of [NOW,NOW+60000,NOW+120000])await worker.scheduled({cron:'* * * * *'},e,{}, {now,...upstream,send:async j=>{sent.push(j);return {state:'sent',code:'provider_accepted'};}});
+  assert.equal(sent.length,1);assert.equal(sent[0].event.id,'2111492738025959922');assert.equal(sent[0].event.tweetClass,'plan');
+  assert.equal(db.prepare("SELECT count(*) n FROM bark_events WHERE state='sent'").get().n,1);
+  assert.equal(db.prepare("SELECT code FROM bark_events WHERE state='cancelled'").get().code,'superseded_by_plan');
+  assert.deepEqual(db.prepare('SELECT reset_alerts,forecast_alerts,threshold,language,token_hash,device_cipher,revision FROM bark_subscriptions').all(),prefs);
+ }
+});
+
+test('upgrade recovery does not replay a plan already sent by the legacy path or notify a later subscriber',async()=>{
+ const e=await setup({count:2}),db=e.NOTIFY_DB.sql,p=record(),upstream=source(feed([p]));
+ await tweets.discoverTiboPosts(e,{now:NOW,...upstream,log});
+ db.prepare("UPDATE bark_events SET kind='reset',state='sent',attempts=1,code='provider_accepted'").run();
+ db.prepare("DELETE FROM bark_meta WHERE name LIKE 'tibo-posts:seen:%'").run();
+ db.prepare("UPDATE bark_meta SET value=? WHERE name='tibo-posts:baseline:v1'").run(String(NOW));
+ const devices=db.prepare('SELECT device_hash FROM bark_subscriptions ORDER BY device_hash').all();
+ db.prepare('DELETE FROM bark_events WHERE recipient=?').run(devices[1].device_hash);
+ db.prepare('UPDATE bark_control SET baseline_at=? WHERE id=?').run(NOW,devices[1].device_hash);
+ await worker.scheduled({cron:'* * * * *'},e,{}, {now:NOW+60000,...upstream,send:()=>assert.fail('Already notified or subscribed after the post')});
+ const rows=db.prepare('SELECT kind,state,attempts FROM bark_events').all();assert.equal(rows.length,1);assert.equal(rows[0].state,'sent');assert.equal(rows[0].attempts,1);
+});
+
+test('legacy fallback uses the active monitor start when an upgrade feed read fails',async()=>{
+ const e=await setup(),db=e.NOTIFY_DB.sql,p=record();
+ await tweets.discoverTiboPosts(e,{now:NOW,...source(feed([p])),log});db.prepare('DELETE FROM bark_events').run();
+ db.prepare("UPDATE bark_meta SET value=? WHERE name='tibo-posts:baseline:v1'").run(String(NOW));
+ const sent=[];await worker.scheduled({cron:'* * * * *'},e,{}, {now:NOW+60000,fetcher:async()=>new Response('Unavailable',{status:503}),send:async j=>{sent.push(j);return {state:'sent',code:'provider_accepted'};}});
+ assert.equal(sent.length,1);assert.equal(sent[0].event.id,p.id);
+});
+
 test('a failed or throttled first feed read still fences historical KV plans',async()=>{
  for(const throttled of [false,true]){const e=await setup({baseline:false}),p=record(),r={id:p.id,url:p.url,postedAt:p.at,original:p.text,textStatus:'mirror',textSource:'https://codex-reset.com/api/feed',category:'post'};await e.RADAR.put('public-v1',JSON.stringify({...e.kv,records:[r]}));
   if(throttled)for(const path of ['/api/feed','/tibo/x'])e.NOTIFY_DB.sql.prepare('INSERT INTO bark_meta VALUES(?,?)').run('codex-reset:attempt:'+path,String(NOW));

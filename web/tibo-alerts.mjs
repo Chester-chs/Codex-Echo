@@ -13,8 +13,8 @@ export async function tiboContext(db,state){
 export async function discoverTiboPosts(env,{now=Date.now(),fetcher=fetch,translate=text=>translatePublicText(text,{fetcher:(url,options)=>fetch(url,{...options,signal:AbortSignal.timeout(3000)})}),log=x=>console.log(JSON.stringify(x))}={}){
  if(!env.NOTIFY_DB||env.BARK_VISITORS_ENABLED!=='true')return null;
  const db=env.NOTIFY_DB;
- // Establish the deployment fence even if the first upstream read fails or is throttled.
- await db.prepare('INSERT OR IGNORE INTO bark_meta(name,value) SELECT key,value FROM json_each(?)').bind(JSON.stringify({[FENCE]:String(now),'codex-reset:baseline':String(now)})).run();
+ // First installation stays silent; upgrades retain the active monitor start, even after a failed read.
+ await db.prepare("INSERT OR IGNORE INTO bark_meta(name,value) SELECT key,COALESCE((SELECT value FROM bark_meta WHERE name='codex-reset:baseline'),(SELECT value FROM bark_meta WHERE name='tibo-posts:baseline:v1'),value) FROM json_each(?)").bind(JSON.stringify({[FENCE]:String(now),'codex-reset:baseline':String(now)})).run();
  const results=await Promise.allSettled([
   readProvider(env,'/api/feed',{now,fetcher}).then(p=>parseCodexResetFeed(p,now)),
   readProvider(env,'/tibo/x',{now,fetcher}).then(p=>parseCodexResetArchive(p,now))
@@ -22,9 +22,9 @@ export async function discoverTiboPosts(env,{now=Date.now(),fetcher=fetch,transl
  const posts=results.flatMap(r=>r.status==='fulfilled'?r.value:[]),feed=results[0].status==='fulfilled'?results[0].value:[];
  for(let i=0;i<results.length;i++)if(results[i].status==='rejected'&&results[i].reason?.code!=='minute_budget')log({event:'tweet_source_failed',source:i?'archive':'feed'});
  if(results[0].status==='fulfilled'){
-  // The feature fence is separate from the existing provider fence: a deployment never replays history.
+  // A later feature rollout must not hide posts published while this monitor was already active.
   const meta=(await db.prepare("SELECT name,value FROM bark_meta WHERE name IN(?, ?, 'codex-reset:baseline') OR name IN(SELECT 'tibo-posts:seen:'||value FROM json_each(?))").bind(FENCE,CONTEXT,JSON.stringify(feed.map(p=>p.id))).all()).results;
-  const baseline=Math.max(...meta.filter(p=>[FENCE,'codex-reset:baseline'].includes(p.name)).map(p=>Number(p.value))),seen=new Set(meta.map(p=>p.name)),events=[],processed=[];
+  const baseline=Number(meta.find(p=>p.name==='codex-reset:baseline')?.value??meta.find(p=>p.name===FENCE)?.value),seen=new Set(meta.map(p=>p.name)),events=[],processed=[];
   let prior=[];try{prior=JSON.parse(meta.find(p=>p.name===CONTEXT)?.value||'[]');}catch{}
   const map=new Map([...(Array.isArray(prior)?prior:[]),...feed].map(p=>[p.id,p]));
   let translations=2;
