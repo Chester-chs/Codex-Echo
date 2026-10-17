@@ -8,7 +8,7 @@ See **the latest Codex reset announcement, upcoming plans, a history calendar an
 
 ## What you can do
 
-- **Follow reset news:** see how long ago the latest reset occurred for the first 12 hours, then its date. Plans with a recognizable time show a countdown.
+- **Follow reset news:** see the latest available reset timestamp, with its source basis shown. Times under 12 hours old are relative; older times use a date. Plans with a recognizable time show a countdown.
 - **Check completion status:** distinguish awaiting confirmation, a reset observed by a source and Tibo's explicit confirmation, with links to the evidence.
 - **Explore history:** browse announcements by publication date, view statistics and read collected Tibo posts.
 - **Get phone alerts:** connect your own Bark, choose reset or forecast alerts, adjust the forecast threshold and notification language, and unsubscribe at any time.
@@ -19,7 +19,7 @@ This is an independent project based on public sources, unaffiliated with OpenAI
 
 Dates, counts and forecasts in these screenshots are illustrative snapshots. Visit the website for current information.
 
-![Codex Echo desktop: latest announcement, forecast and history statistics](docs/images/desktop-en.png)
+![Codex Echo desktop: latest reset time, forecast and history statistics](docs/images/desktop-en.png)
 
 <details>
 <summary>View the mobile layout and alert settings</summary>
@@ -80,7 +80,9 @@ These settings are independent: enabling page notifications does not connect Bar
 
 A definite reset commitment without a calculable time can trigger an advance notice, but no countdown is invented. A more specific plan posted later may trigger an additional plan alert.
 
-After completion is detected, the homepage shows “Time to enjoy GPT!” for 1 hour before returning to the regular overview. Historical records remain available.
+When completion evidence matches an existing reset plan, the homepage shows “Time to enjoy GPT!” until one hour after the earliest observation or confirmation, then returns to the regular overview. Historical records remain available.
+
+“Latest reset time” prefers a source-provided actual or observation time. If only a completion or reset announcement is available, it shows the publication time and labels the actual time as unknown. A planned time is never treated as a completed reset.
 
 A source observation or public announcement does not guarantee that every account has recovered. Calendar markers use announcement publication dates; announcement counts are not completed-reset totals or your personal available uses.
 
