@@ -130,6 +130,27 @@ export function normalizeResetConfirmation(value,now=Date.now()) {
  return Object.fromEntries(['id','kind','state','sourceAt','url','summary','confirmationSource','observedAt','confirmedAt','confirmationUrl'].filter(k=>value[k]!=null).map(k=>[k,value[k]]));
 }
 
+export const resetEvidenceAt=value=>Date.parse(value?.confirmationSource==='operator_observed'?value.observedAt:value?.confirmationSource==='tibo_confirmed'?value.confirmedAt:value?.sourceAt);
+export function preferResetConfirmation(previous,incoming,now=Date.now()){
+ const old=normalizeResetConfirmation(previous,now),next=normalizeResetConfirmation(incoming,now);
+ if(!old)return next;if(!next)return old;
+ if(old.id===next.id&&old.confirmationSource!==next.confirmationSource)return old.confirmationSource==='tibo_confirmed'?old:next;
+ return resetEvidenceAt(next)>=resetEvidenceAt(old)?next:old;
+}
+function evidenceMatchesPlan(evidence,record){
+ const parent=tiboReplyContext(record,{parent:record.parent}).selfReply&&(record.inReplyToId||record.parent?.id);
+ return (evidence.id===record.id||evidence.id===parent)&&resetEvidenceAt(evidence)>=Date.parse(record.postedAt);
+}
+// Keep a durable identity across the observation and a later confirmation of the same plan.
+export function completionPlanId(event,records=[],now=Date.now()){
+ const directive=event.kind==='reset'?null:interpretResetDirective(event);
+ if(event.kind!=='reset'&&directive?.kind!=='completed')return;
+ const plans=records.filter(r=>Date.parse(r.postedAt)<=now&&now-Date.parse(r.postedAt)<7*DAY).map(record=>({record,directive:interpretResetDirective(record)})).filter(p=>p.directive?.kind==='scheduled').sort((a,b)=>Date.parse(b.record.postedAt)-Date.parse(a.record.postedAt));
+ if(event.kind==='reset')return plans.find(p=>evidenceMatchesPlan(event,p.record))?.record.id;
+ const explicitParent=tiboReplyContext(event,{parent:event.parent}).selfReply&&(event.inReplyToId||event.parent?.id);
+ return plans.find(p=>p.directive.scope===directive.scope&&Date.parse(p.record.postedAt)<Date.parse(event.postedAt)&&(!explicitParent||[p.record.id,p.record.inReplyToId,p.record.parent?.id].includes(explicitParent)))?.record.id;
+}
+
 export function getResetPlanState(records=[],now=Date.now(),providerConfirmation=null) {
  const items=records.filter(r=>Date.parse(r.postedAt)<=now).map(record=>({record,directive:interpretResetDirective(record)})).filter(x=>x.directive).sort((a,b)=>Date.parse(b.record.postedAt)-Date.parse(a.record.postedAt));
  const plan=items.find(x=>x.directive.kind==='scheduled'&&now-Date.parse(x.record.postedAt)<7*DAY);
@@ -137,7 +158,7 @@ export function getResetPlanState(records=[],now=Date.now(),providerConfirmation
  const target=Date.parse(plan.directive.scheduledAt);
  const confirmation=items.find(x=>['completed','cancelled'].includes(x.directive.kind)&&x.directive.scope===plan.directive.scope&&Date.parse(x.record.postedAt)>Date.parse(plan.record.postedAt));
  if(confirmation&&now-Date.parse(confirmation.record.postedAt)>DAY||!confirmation&&now-target>DAY)return null;
- const evidence=normalizeResetConfirmation(providerConfirmation,now),observation=evidence&&evidence.id===plan.record.id&&Date.parse(evidence.sourceAt)>Date.parse(plan.record.postedAt)&&Date.parse(evidence.confirmationSource==='operator_observed'?evidence.observedAt:evidence.confirmedAt)>=Date.parse(plan.record.postedAt)?evidence:null;
+ const evidence=normalizeResetConfirmation(providerConfirmation,now),observation=evidence&&evidenceMatchesPlan(evidence,plan.record)?evidence:null;
  const phase=confirmation?.directive.kind||(observation?(observation.confirmationSource==='operator_observed'?'observed':'completed'):(now>=target?'awaiting':'scheduled'));
  return {record:plan.record,scheduledAt:plan.directive.scheduledAt,approximate:plan.directive.approximate===true,phase,remainingMs:phase==='scheduled'?Math.max(0,target-now):0,confirmation:confirmation?.record||null,observation};
 }

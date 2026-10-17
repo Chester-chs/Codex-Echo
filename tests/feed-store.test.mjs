@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createFeedLoader } from "../src/lib/feed-store.mjs";
+import {getResetPlanState} from '../src/lib/reset-plan.mjs';
 
 function store() {
   const values = new Map();
@@ -18,6 +19,29 @@ const payload = (id) => ({
       resetType: "automatic",
     },
   ],
+});
+
+test('validated completion survives missing and older successful responses and reopening',async()=>{
+ const storage=store(),at=Date.parse('2026-10-17T16:00:00Z'),id='2111492738025959922',url='https://x.com/thsottiaux/status/'+id;
+ const plan={id,url,postedAt:new Date(at-3600000).toISOString(),original:'We will reset in 5 hours.',textStatus:'verified',category:'schedule',resetType:'automatic'};
+ const observed={id,url,kind:'reset',state:'confirmed',sourceAt:new Date(at).toISOString(),observedAt:new Date(at).toISOString(),confirmationSource:'operator_observed'};
+ const official={...observed,confirmationSource:'tibo_confirmed',confirmedAt:new Date(at+1000).toISOString(),confirmationUrl:url};
+ let proof=official;
+ const options={url:'https://source.example',storage,request:async()=>({statusCode:200,data:{resets:[plan],posts:[plan],resetConfirmation:proof}})};
+ let load=createFeedLoader(options);
+ for(const value of [official,null,observed]){proof=value;const {feed}=await load();assert.equal(getResetPlanState(feed.posts,at+2000,feed.resetConfirmation).phase,'completed');}
+ load=createFeedLoader(options);proof=null;
+ const {feed}=await load();assert.equal(getResetPlanState(feed.posts,at+2000,feed.resetConfirmation).phase,'completed');
+});
+
+test('an incomplete copy of a known terminal post cannot revive its countdown',async()=>{
+ const at=Date.parse('2026-10-17T16:00:00Z'),id='2111492738025959922',url='https://x.com/thsottiaux/status/'+id;
+ const plan={id,url,postedAt:new Date(at-3600000).toISOString(),original:'We will reset in 5 hours.',textStatus:'mirror',category:'schedule',resetType:'automatic'};
+ const done={...plan,id:'2111492738025959923',url:url.replace(id,'2111492738025959923'),postedAt:new Date(at).toISOString(),original:'The reset is complete.'};
+ let latest=done;
+ const load=createFeedLoader({url:'https://source.example',storage:store(),request:async()=>({statusCode:200,data:{resets:[plan,latest],posts:[plan,latest]}})});
+ let feed=(await load()).feed;assert.equal(getResetPlanState(feed.posts,at+2000).phase,'completed');
+ latest={...done,original:'',textStatus:'missing'};feed=(await load()).feed;assert.equal(getResetPlanState(feed.posts,at+2000).phase,'completed');
 });
 test('an online response with stale upstream data is distinct from an offline cache',async()=>{
  const load=createFeedLoader({url:'https://source.example',storage:store(),request:async()=>({statusCode:200,data:{resets:[],status:'stale'}})});

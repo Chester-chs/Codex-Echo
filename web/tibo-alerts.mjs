@@ -1,6 +1,6 @@
 import {parseCodexResetFeed,parseCodexResetArchive} from '../backend/codex-reset.mjs';
 import {mergeRecords} from '../backend/sources.mjs';
-import {classifyTiboPost,tiboReplyContext,resetNoticeKey,annotateResetPlan,normalizeResetConfirmation} from '../src/lib/reset-plan.mjs';
+import {classifyTiboPost,tiboReplyContext,resetNoticeKey,annotateResetPlan,normalizeResetConfirmation,completionPlanId} from '../src/lib/reset-plan.mjs';
 import {archivedTranslations} from '../src/lib/translations-zh.mjs';
 import {readProvider} from './provider-budget.mjs';
 import {translatePublicText} from '../backend/translate.mjs';
@@ -28,6 +28,7 @@ export async function discoverTiboPosts(env,{now=Date.now(),fetcher=fetch,transl
   const baseline=Number(meta.find(p=>p.name==='codex-reset:baseline')?.value??meta.find(p=>p.name===FENCE)?.value),seen=new Set(meta.map(p=>p.name)),events=[],processed=[];
   let prior=[];try{prior=JSON.parse(meta.find(p=>p.name===CONTEXT)?.value||'[]');}catch{}
   const map=new Map([...(Array.isArray(prior)?prior:[]),...feed].map(p=>[p.id,p]));
+  const relatedRecords=mergeRecords([...map.values()]).filter(r=>r.category==='schedule');
   let translations=2;
   for(const post of feed){
    const at=Date.parse(post.postedAt);if(post.visibilityOnly||at<=baseline||at>now||now-at>=21600000||seen.has('tibo-posts:seen:'+post.id))continue;
@@ -40,6 +41,7 @@ export async function discoverTiboPosts(env,{now=Date.now(),fetcher=fetch,transl
    }
    const record=annotateResetPlan({...post,parent:reply.selfReply&&parent?{id:parent.id,original:parent.original.slice(0,1000),translation:parent.translation||'',resetType:parent.resetType}:undefined});
    const event={...record,original:post.original.slice(0,2000),state:classification.kind==='completed'?'confirmed':classification.kind,tweetClass:classification.kind,sourceAt:post.postedAt,...classification,kind:'tweet',threadId:post.conversationId||parent?.id||post.id};
+   if(classification.kind==='completed')event.resetPlanId=completionPlanId(record,relatedRecords,now);
    const key=classification.kind==='plan'?resetNoticeKey(record):`alert:tweet:${post.id}:${classification.kind}`;
    events.push({key,event,posted:at});
    log({event:'tweet_alert',id:post.id,class:classification.kind,lagSeconds:Math.round((now-at)/1000),providerKind:post.providerKind,selfReply:reply.selfReply});

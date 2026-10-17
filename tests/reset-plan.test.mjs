@@ -95,6 +95,14 @@ test('Bark distinguishes a planned reset from completed activity in both languag
 });
 
 const observation=(plan,at)=>({id:plan.id,kind:'reset',state:'confirmed',sourceAt:new Date(at).toISOString(),url:plan.url,confirmationSource:'operator_observed',observedAt:new Date(at).toISOString(),summary:'Observed by provider'});
+
+test('completion uses evidence time and can reference the explicit self-reply parent',()=>{
+ const parent=post('Day 13/ Le limit reset'),child={...post('Landing sometime today by EOD PST',1000,'2111492738025959922'),isReply:true,replyingTo:'thsottiaux',inReplyToId:parent.id,parent};
+ for(const r of [parent,child]){
+  const evidence={...observation(r,now+3600000),sourceAt:parent.postedAt};
+  assert.equal(api.getResetPlanState([parent,child],now+3600000,evidence).phase,'observed');
+ }
+});
 test('provider observation stops a matching plan countdown without claiming Tibo confirmed',()=>{
  const r=post('We will reset in 5 hours.'),event=observation(r,now+3600000),f=normalizeFeed({resets:[r],posts:[r],resetConfirmation:event},now+3600000);
  const p=api.getResetPlanState(f.posts,now+3600000,f.resetConfirmation);assert.equal(p.phase,'observed');assert.equal(p.remainingMs,0);assert.equal(p.observation.observedAt,'2026-10-17T13:00:00.000Z');assert.equal(p.confirmation,null);assert.equal(f.records.length,1);

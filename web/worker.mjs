@@ -1,7 +1,7 @@
 import {countingDb} from './query-budget.mjs';
-import {discoverCodexReset,publicResetConfirmation} from './codex-alerts.mjs';
+import {discoverCodexReset} from './codex-alerts.mjs';
 import {readProvider} from './provider-budget.mjs';
-import {discoverTiboPosts} from './tibo-alerts.mjs';
+import {discoverTiboPosts,tiboContext} from './tibo-alerts.mjs';
 import {sendBark} from './bark.mjs';
 import {collectPublicSources,enrichOriginal,mergeRecords} from '../backend/sources.mjs';
 import {mergePublic,publicFeed,uniqueForecastHistory} from '../cloud/state.mjs';
@@ -55,9 +55,10 @@ export async function handleRequest(request,env,ctx={},now=Date.now()) {
  if(pathname==='/api/status')return json({web:true,wechat:{configured:false,ready:false},bark:{personalChannelSupported:true,selfService:env.BARK_VISITORS_ENABLED==='true',capacity:visitorCapacity(env)},pollSeconds:Number(env.PUBLIC_POLL_SECONDS)||600});
  if(!['/api/feed','/api/forecasts'].includes(pathname))return json({error:'Not found'},404);
  try {
-  const state=await env.RADAR.get(KEY,'json');
+  let state=await env.RADAR.get(KEY,'json');
   if(!state)return json({error:'First cloud sync pending'},503);
-  const body=pathname==='/api/feed'?{...publicFeed(state,now),resetConfirmation:await publicResetConfirmation(env.NOTIFY_DB,now)}:{forecasts:uniqueForecastHistory(state.history||[])};
+  if(pathname==='/api/feed'&&env.NOTIFY_DB)try{state=await tiboContext(env.NOTIFY_DB,state,now);}catch{/* The client retains previously validated completion evidence during a D1 outage. */}
+  const body=pathname==='/api/feed'?{...publicFeed(state,now),resetConfirmation:state.resetConfirmation||null}:{forecasts:uniqueForecastHistory(state.history||[])};
   return request.method==='HEAD'?new Response(null,{headers}):json(body);
  } catch {return json({error:'Data temporarily unavailable'},503);}
 }

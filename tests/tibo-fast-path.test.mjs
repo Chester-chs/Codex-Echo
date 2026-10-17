@@ -21,6 +21,53 @@ async function setup({count=1,baseline=true,queue=false}={}){const db=database()
 }
 function source(payload,latest=null){const calls=[];const fetcher=async url=>{calls.push(url);if(url.endsWith('/api/feed'))return Response.json(payload);if(url.endsWith('/api/forecast'))return Response.json({latest_alert:latest});if(url.endsWith('/tibo/x'))return new Response('<html>Archive temporarily unavailable</html>');return new Response('missing',{status:503});};return {fetcher,calls};}
 const log=()=>{};
+
+test('fresh completion evidence with old publication time reaches newer subscribers and upgrades the page',async()=>{
+ const e=await setup(),p=record('We will reset in 12 hours.','2111492738025959922',NOW-8*3600000),sent=[];
+ const observed={id:p.id,url:p.url,kind:'reset',state:'confirmed',source_at:p.at,confirmation_source:'operator_observed',observed_at:iso(NOW-1000),summary:'Observed'};
+ await discoverCodexReset(e,{now:NOW,...source(feed(),observed)});
+ await runVisitorBark(e,e.kv,{now:NOW,send:async j=>{sent.push(j);return {state:'sent'};}});assert.equal(sent.length,1);
+ const official={...observed,source_at:iso(NOW-9*3600000),confirmation_source:'tibo_confirmed',confirmed_at:iso(NOW+1000),confirmation_url:p.url};
+ await discoverCodexReset(e,{now:NOW+60000,...source(feed(),official)});
+ const response=await handleRequest(new Request('https://radar.test/api/feed'),e,{},NOW+60000);
+ assert.equal((await response.json()).resetConfirmation.confirmationSource,'tibo_confirmed');
+});
+
+test('public feed projects retained D1 completion even when KV still contains only the plan',async()=>{
+ const e=await setup(),p=record();await tweets.discoverTiboPosts(e,{now:NOW,...source(feed([p])),log});
+ const snapshot=structuredClone(e.kv),done=record('The reset is complete.','2117536046041595905',NOW+1000);
+ await tweets.discoverTiboPosts(e,{now:NOW+60000,...source(feed([done,p])),log});e.RADAR.get=async()=>snapshot;
+ const body=await(await handleRequest(new Request('https://radar.test/api/feed'),e,{},NOW+60000)).json();
+ assert.ok(body.posts.some(r=>r.id===done.id&&r.completionNotice));
+});
+
+test('late completion of the same plan is deduplicated while a new plan still completes',async()=>{
+ for(const queue of [false,true]){
+  const e=await setup({queue}),p=record('We will reset in 12 hours.');await tweets.discoverTiboPosts(e,{now:NOW,...source(feed([p])),log});
+  const alert={id:p.id,url:p.url,kind:'reset',state:'confirmed',source_at:iso(NOW+1000),confirmation_source:'operator_observed',observed_at:iso(NOW+1000),summary:'Observed'},sent=[];
+  const send=async j=>{sent.push(j);return {state:'sent',code:'provider_accepted'};};
+  const dispatch=async time=>{await runVisitorBark(e,e.kv,{now:time,send});if(queue){const rows=e.NOTIFY_DB.sql.prepare("SELECT recipient,event_key FROM bark_events WHERE state IN('pending','retry')").all();await consumeBarkBatch({messages:rows.map(r=>({body:{recipient:r.recipient,eventKey:r.event_key},ack(){},retry(){}}))},e,{now:time,send});}};
+  await discoverCodexReset(e,{now:NOW+60000,...source(feed([p]),alert)});await dispatch(NOW+60000);assert.equal(sent.length,1);
+  const late=NOW+7*3600000,done=record('The reset is complete.','2117536046041595905',late-1000,{is_reply:true,replying_to:'thsottiaux',in_reply_to_tweet_id:p.id});
+  await tweets.discoverTiboPosts(e,{now:late,...source(feed([done,p],[],late)),log});await dispatch(late);assert.equal(sent.length,1,'same reset must not send twice after six hours');
+  const next=record('We will reset in 2 hours.','2117536046041595906',late+60000),nextDone=record('The reset is complete.','2117536046041595907',late+120000,{is_reply:true,replying_to:'thsottiaux',in_reply_to_tweet_id:next.id});
+  await tweets.discoverTiboPosts(e,{now:late+180000,...source(feed([nextDone,next,done,p],[],late+180000)),log});await dispatch(late+180000);assert.equal(sent.length,2,'a distinct next reset needs its own completion');
+ }
+});
+
+test('legacy-only completion for a distinct known plan is not covered by the previous reset',async()=>{
+ for(const queue of [false,true]){
+  const e=await setup({queue}),db=e.NOTIFY_DB.sql,recipient=db.prepare('SELECT device_hash FROM bark_subscriptions').get().device_hash;
+  const prior={id:'2117536046041595999',resetPlanId:'2117536046041595998',kind:'reset',state:'confirmed',sourceAt:iso(NOW-1000)};
+  db.prepare("INSERT INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) VALUES(?,'prior','alert',?,'sent',?,?,?)").run(recipient,JSON.stringify(prior),NOW-1000,NOW-1000,NOW-1000);
+  db.prepare("INSERT INTO bark_meta VALUES('codex-reset:last-ok',?)").run(String(NOW));
+  const p={id:'2117536046041595904',url:'https://x.com/thsottiaux/status/2117536046041595904',postedAt:iso(NOW-2000),original:'We will reset in 2 hours.',textStatus:'mirror',category:'schedule',resetType:'automatic'},done={...p,id:'2117536046041595905',url:'https://x.com/thsottiaux/status/2117536046041595905',postedAt:iso(NOW-500),original:'The reset is complete.',category:'reset',completionNotice:true};
+  await e.RADAR.put('public-v1',JSON.stringify({...e.kv,records:[done,p]}));let sends=0;
+  const send=async()=>{sends++;return {state:'sent'};};await runVisitorBark(e,e.kv,{now:NOW,send});
+  if(queue){const rows=db.prepare("SELECT recipient,event_key FROM bark_events WHERE state IN('pending','retry')").all();await consumeBarkBatch({messages:rows.map(r=>({body:{recipient:r.recipient,eventKey:r.event_key},ack(){},retry(){}}))},e,{now:NOW,send});}
+  assert.equal(sends,1);
+ }
+});
 test('ordinary posts update the website once, never add Bark events, and repeated minutes do not write KV',async()=>{
  const e=await setup(),p=record('Working on something fun.');p.kind='other';const context={id:'2117536046041595905',url:'https://x.com/thsottiaux/status/2117536046041595905',text:'A daily reply',at:iso(NOW-500),visibility_only:true,display_kind:'context'};
  const upstream=source(feed([p],[context]));await tweets.discoverTiboPosts(e,{now:NOW,...upstream,log});assert.equal(e.writes,1);assert.equal(e.kv.records.length,2);assert.equal(e.NOTIFY_DB.sql.prepare('SELECT count(*) n FROM bark_events').get().n,0);
