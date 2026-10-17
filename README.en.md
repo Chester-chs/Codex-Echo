@@ -8,7 +8,7 @@ See **the latest Codex reset announcement, upcoming plans, a history calendar an
 
 ## What you can do
 
-- **Follow reset news:** see the latest announcement and a countdown when a plan includes a recognizable time.
+- **Follow reset news:** see how long ago the latest reset occurred for the first 12 hours, then its date. Plans with a recognizable time show a countdown.
 - **Check completion status:** distinguish awaiting confirmation, a reset observed by a source and Tibo's explicit confirmation, with links to the evidence.
 - **Explore history:** browse announcements by publication date, view statistics and read collected Tibo posts.
 - **Get phone alerts:** connect your own Bark, choose reset or forecast alerts, adjust the forecast threshold and notification language, and unsubscribe at any time.
@@ -79,6 +79,8 @@ These settings are independent: enabling page notifications does not connect Bar
 | **Completion confirmed** | Tibo's explicit completion message has been collected. Open the original post to verify it |
 
 A definite reset commitment without a calculable time can trigger an advance notice, but no countdown is invented. A more specific plan posted later may trigger an additional plan alert.
+
+After completion is detected, the homepage shows “Time to enjoy GPT!” for 1 hour before returning to the regular overview. Historical records remain available.
 
 A source observation or public announcement does not guarantee that every account has recovered. Calendar markers use announcement publication dates; announcement counts are not completed-reset totals or your personal available uses.
 

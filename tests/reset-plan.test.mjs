@@ -96,6 +96,43 @@ test('Bark distinguishes a planned reset from completed activity in both languag
 
 const observation=(plan,at)=>({id:plan.id,kind:'reset',state:'confirmed',sourceAt:new Date(at).toISOString(),url:plan.url,confirmationSource:'operator_observed',observedAt:new Date(at).toISOString(),summary:'Observed by provider'});
 
+test('early reset success is shown for one hour without reviving the original countdown',()=>{
+ const plan=post('We will reset in 5 hours.'),evidence=observation(plan,now+3600000);
+ assert.equal(api.getResetPlanState([plan],now+3600000,evidence).showCard,true);
+ assert.equal(api.getResetPlanState([plan],now+7199999,evidence).showCard,true);
+ const expired=api.getResetPlanState([plan],now+7200000,evidence);
+ assert.equal(expired.showCard,false);
+ assert.equal(expired.phase,'observed');
+ assert.equal(expired.remainingMs,0);
+ assert.equal(api.isCurrentPlanNotice({...plan,scheduledAt:'2026-10-17T17:00:00.000Z'},[plan],now+7200000,evidence),false);
+});
+
+test('tweet completion expires after one hour and a new plan can still appear',()=>{
+ const plan=post('We will reset in 5 hours.'),done=post('The reset is complete.',3600000,'2117536046041595905');
+ assert.equal(api.getResetPlanState([plan,done],now+7199999).showCard,true);
+ assert.equal(api.getResetPlanState([plan,done],now+7200000).showCard,false);
+ const next=post('We will reset in 2 hours.',7200001,'2117536046041595906');
+ const state=api.getResetPlanState([plan,done,next],now+7200002);
+ assert.equal(state.showCard,true);assert.equal(state.phase,'scheduled');assert.equal(state.record.id,next.id);
+});
+
+test('a later confirmation retains the first observation so it cannot restart the success hour',()=>{
+ const plan=post('We will reset in 5 hours.'),observed=observation(plan,now+3600000);
+ const official={...observed,confirmationSource:'tibo_confirmed',observedAt:null,confirmedAt:new Date(now+7500000).toISOString(),confirmationUrl:plan.url};
+ const retained=api.preferResetConfirmation(observed,official,now+7500000);
+ assert.equal(retained.observedAt,'2026-10-17T13:00:00.000Z');
+ const state=api.getResetPlanState([plan],now+7500000,retained);
+ assert.equal(state.phase,'completed');assert.equal(state.showCard,false);
+ assert.equal(api.getResetPlanState([plan],now+7500000,api.preferResetConfirmation(retained,official,now+7500000)).showCard,false);
+});
+
+test('scheduled and awaiting plans remain visible without completion evidence',()=>{
+ const plan=post('We will reset in 5 hours.');
+ assert.equal(api.getResetPlanState([plan],now+7200000).showCard,true);
+ const awaiting=api.getResetPlanState([plan],now+18000001);
+ assert.equal(awaiting.phase,'awaiting');assert.equal(awaiting.showCard,true);
+});
+
 test('completion uses evidence time and can reference the explicit self-reply parent',()=>{
  const parent=post('Day 13/ Le limit reset'),child={...post('Landing sometime today by EOD PST',1000,'2111492738025959922'),isReply:true,replyingTo:'thsottiaux',inReplyToId:parent.id,parent};
  for(const r of [parent,child]){

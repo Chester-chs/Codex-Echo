@@ -134,8 +134,11 @@ export const resetEvidenceAt=value=>Date.parse(value?.confirmationSource==='oper
 export function preferResetConfirmation(previous,incoming,now=Date.now()){
  const old=normalizeResetConfirmation(previous,now),next=normalizeResetConfirmation(incoming,now);
  if(!old)return next;if(!next)return old;
- if(old.id===next.id&&old.confirmationSource!==next.confirmationSource)return old.confirmationSource==='tibo_confirmed'?old:next;
- return resetEvidenceAt(next)>=resetEvidenceAt(old)?next:old;
+ const preferred=old.id===next.id&&old.confirmationSource!==next.confirmationSource?(old.confirmationSource==='tibo_confirmed'?old:next):(resetEvidenceAt(next)>=resetEvidenceAt(old)?next:old);
+ if(old.id!==next.id)return preferred;
+ // Later confirmation must not restart the already observed reset's success banner.
+ const observed=[old.observedAt,next.observedAt].map(Date.parse).filter(at=>Number.isFinite(at)&&at<=now);
+ return observed.length?{...preferred,observedAt:new Date(Math.min(...observed)).toISOString()}:preferred;
 }
 function evidenceMatchesPlan(evidence,record){
  const parent=tiboReplyContext(record,{parent:record.parent}).selfReply&&(record.inReplyToId||record.parent?.id);
@@ -160,7 +163,12 @@ export function getResetPlanState(records=[],now=Date.now(),providerConfirmation
  if(confirmation&&now-Date.parse(confirmation.record.postedAt)>DAY||!confirmation&&now-target>DAY)return null;
  const evidence=normalizeResetConfirmation(providerConfirmation,now),observation=evidence&&evidenceMatchesPlan(evidence,plan.record)?evidence:null;
  const phase=confirmation?.directive.kind||(observation?(observation.confirmationSource==='operator_observed'?'observed':'completed'):(now>=target?'awaiting':'scheduled'));
- return {record:plan.record,scheduledAt:plan.directive.scheduledAt,approximate:plan.directive.approximate===true,phase,remainingMs:phase==='scheduled'?Math.max(0,target-now):0,confirmation:confirmation?.record||null,observation};
+ const success=phase==='observed'||phase==='completed';
+ const completionTimes=[observation&&resetEvidenceAt(observation),observation&&Date.parse(observation.observedAt),confirmation?.directive.kind==='completed'&&Date.parse(confirmation.record.postedAt)].filter(at=>Number.isFinite(at)&&at>=Date.parse(plan.record.postedAt)&&at<=now);
+ const completedAt=success&&completionTimes.length?Math.min(...completionTimes):null;
+ // Expire only the presentation; retain terminal state for plan suppression and history.
+ const showCard=!success||(completedAt!==null&&now-completedAt<3600000);
+ return {record:plan.record,scheduledAt:plan.directive.scheduledAt,approximate:plan.directive.approximate===true,phase,remainingMs:phase==='scheduled'?Math.max(0,target-now):0,completedAt,showCard,confirmation:confirmation?.record||null,observation};
 }
 
 export function isCurrentPlanNotice(record,records,now,providerConfirmation=null) {

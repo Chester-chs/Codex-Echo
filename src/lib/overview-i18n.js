@@ -2,7 +2,8 @@ export const overviewMessages = {
   zh: {
     plannedReset:'计划重置',plannedNotCompleted:'虚线标记计划时间，尚未确认完成；不计入历史公告统计。',planOriginal:'查看计划原文',
     overviewTitle:'Codex 重置，一眼看清。', overviewSubtitle:'最近公告、重置日历与 Tibo 推文，都在这一页。',
-    latestReset:'上一次重置公告', noReset:'暂无重置公告', announcementTime:'公告发布时间', completionUnknown:'实际完成时刻未说明',
+    latestReset:'最近重置时间', noReset:'暂无重置记录', announcementTime:'公告发布时间', completionUnknown:'实际完成时刻未说明',
+    resetConfirmed:'来源确认',resetObserved:'来源实测',viewResetSource:'查看来源',resetBasis_actual:'来源记录的重置时间',resetBasis_observed:'来源实测时间 · 个人额度以账号为准',resetBasis_confirmed:'完成确认发布时间 · 实际时刻未说明',resetBasis_announcement:'仅有公告时间 · 实际重置时刻未知',
     daysAgo:'天', hoursAgo:'小时', minutesAgo:'分钟', ago:'前', justNow:'刚刚', readOriginal:'查看公告详情',
     totalAnnouncements:'累计重置公告', automaticTotal:'全局重置公告', bankedTotal:'重置券相关公告', recordedDays:'有记录的天数',
     bankedCountHelp:'网站收录的公告数，非你的账号可用次数。',
@@ -24,7 +25,8 @@ export const overviewMessages = {
   en: {
     plannedReset:'Planned reset',plannedNotCompleted:'Dashed marks show a planned target, not confirmed completion; excluded from historical counts.',planOriginal:'Read original plan',
     overviewTitle:'Codex resets. At a glance.', overviewSubtitle:'The latest announcement, a calendar, and the history. All in one place.',
-    latestReset:'Latest reset announcement', noReset:'No reset announcements yet', announcementTime:'Announcement published', completionUnknown:'Completion time not stated',
+    latestReset:'Latest reset time', noReset:'No reset records yet', announcementTime:'Announcement published', completionUnknown:'Completion time not stated',
+    resetConfirmed:'Source confirmed',resetObserved:'Source observed',viewResetSource:'View source',resetBasis_actual:'Reset time recorded by source',resetBasis_observed:'Source observation · Check your account',resetBasis_confirmed:'Confirmation published · Actual time unknown',resetBasis_announcement:'Announcement only · Reset time unknown',
     daysAgo:'d', hoursAgo:'h', minutesAgo:'min', ago:'ago', justNow:'Just now', readOriginal:'Read the full announcement',
     totalAnnouncements:'Total announcements', automaticTotal:'Global reset posts', bankedTotal:'Reset credit announcements', recordedDays:'Days with records',
     bankedCountHelp:'Announcements collected here, not reset credits on your account.',

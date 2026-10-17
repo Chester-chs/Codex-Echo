@@ -18,11 +18,11 @@
     <section class="pulse-highlights" :class="{'has-plan':plan}">
       <ResetPlanCard v-if="plan" :plan="plan" :language="settings.language" :time="time" :zoneName="zoneName" :stale="!['live','degraded'].includes(mode)" @detail="$emit('detail',$event)" />
       <article class="pulse-latest">
-        <div class="pulse-latest-heading"><span><span class="pulse-light-dot"></span>{{ c('latestReset') }}</span><span v-if="overview.latest" class="pulse-hero-type">{{ recordLabel(overview.latest) }}</span></div>
-        <div v-if="overview.latest" class="pulse-last-date"><span class="pulse-big-date">{{ heroDate }}</span><span class="pulse-year">{{ latestDayKey.slice(0,4) }}</span></div>
+        <div class="pulse-latest-heading"><span><span class="pulse-light-dot"></span>{{ c('latestReset') }}</span><span v-if="latestReset" class="pulse-hero-type">{{ latestReset.record?recordLabel(latestReset.record):c(latestReset.basis==='observed'?'resetObserved':'resetConfirmed') }}</span></div>
+        <div v-if="latestReset" class="pulse-last-date" :class="{'is-relative':latestTime.relative}"><span class="pulse-big-date">{{ latestTime.primary }}</span><span v-if="latestTime.year" class="pulse-year">{{ latestTime.year }}</span></div>
         <div v-else class="pulse-no-date">{{ loading ? t('loading') : c('noReset') }}</div>
-        <div class="pulse-latest-meta" v-if="overview.latest"><span>{{ time(overview.latest.postedAt).slice(11) }} <span class="pulse-zone-label">{{ zoneName }}</span></span><span class="pulse-elapsed">{{ elapsed }}</span></div>
-        <div class="pulse-hero-bottom"><span>{{ c('announcementTime') }}<span class="pulse-hero-separator"> · </span>{{ overview.latest?.resetAt ? t('actualReset') + ' ' + time(overview.latest.resetAt) : c('completionUnknown') }}</span><WebButton class="base-button" :disabled="!overview.latest" @click="$emit('detail',overview.latest)">{{ c('readOriginal') }}<AppIcon name="arrow-up-right" light /></WebButton></div>
+        <div class="pulse-latest-meta" v-if="latestReset"><span>{{ time(new Date(latestReset.at).toISOString()) }} <span class="pulse-zone-label">{{ zoneName }}</span></span></div>
+        <div class="pulse-hero-bottom"><span>{{ latestReset?c('resetBasis_'+latestReset.basis):c('completionUnknown') }}</span><a v-if="latestReset?.sourceUrl" :href="latestReset.sourceUrl" target="_blank" rel="noopener noreferrer" class="pulse-reset-source">{{ c('viewResetSource') }}<AppIcon name="arrow-up-right" light /></a><WebButton v-else class="base-button" :disabled="!latestReset?.record" @click="$emit('detail',latestReset.record)">{{ c('readOriginal') }}<AppIcon name="arrow-up-right" light /></WebButton></div>
       </article>
       <article v-if="!plan" class="pulse-forecast">
         <div class="pulse-card-heading"><h2>{{ c('sourceForecast') }}</h2><AppIcon name="activity" /></div>
@@ -83,6 +83,7 @@ import WebButton from './WebButton.vue';
 import TiboFeed from './TiboFeed.vue';
 import ResetPlanCard from './ResetPlanCard.vue';
 import {getResetPlanState} from '../lib/reset-plan.mjs';
+import {latestResetInfo,resetTimeLabel} from '../lib/latest-reset.mjs';
 import {displayText,localizedWindow} from '../lib/localized-content.mjs';
 import {dayKey,resetOverview,monthGrid,moveMonth} from '../lib/calendar.mjs';
 import {overviewMessages} from '../lib/overview-i18n.js';
@@ -91,7 +92,12 @@ defineEmits(['zone','language','settings','refresh','detail','forecast','archive
 const c=key=>overviewMessages[props.settings.language][key];
 const countLabel=count=>props.settings.language==='zh'?count+' 条':count+' '+(count===1?'post':'posts');
 const overview=computed(()=>resetOverview(props.records,props.settings.zone,props.now));
-const plan=computed(()=>props.mode==='demo'?null:getResetPlanState(props.posts.length?props.posts:props.records,props.now,props.resetConfirmation));
+const latestReset=computed(()=>latestResetInfo(overview.value.records,props.posts,props.resetConfirmation,props.now));
+const latestTime=computed(()=>latestReset.value?resetTimeLabel(latestReset.value.at,props.now,props.settings.language,props.settings.zone):null);
+const plan=computed(()=>{
+ const state=props.mode==='demo'?null:getResetPlanState(props.posts.length?props.posts:props.records,props.now,props.resetConfirmation);
+ return state?.showCard?state:null;
+});
 const unknownCount=computed(()=>overview.value.unknown);
 const recordLabel=record=>props.t(record.resetTypes?.length>1?'mixedReset':record.type);
 const today=computed(()=>dayKey(props.now,props.settings.zone));
@@ -106,8 +112,6 @@ const selectedRecords=computed(()=>overview.value.byDay[selectedDay.value]||[]);
 const locale=computed(()=>props.settings.language==='zh'?'zh-CN':'en-GB');
 const monthLabel=computed(()=>new Intl.DateTimeFormat(locale.value,{year:'numeric',month:'long',timeZone:'UTC'}).format(new Date(month.value+'-01T12:00:00Z')));
 const selectedDayLabel=computed(()=>new Intl.DateTimeFormat(locale.value,{month:'long',day:'numeric',weekday:'short',timeZone:'UTC'}).format(new Date(selectedDay.value+'T12:00:00Z')));
-const heroDate=computed(()=>new Intl.DateTimeFormat(locale.value,{month:props.settings.language==='zh'?'long':'short',day:'numeric',timeZone:props.settings.zone}).format(new Date(overview.value.latest.postedAt)));
-const elapsed=computed(()=>{const minutes=Math.max(0,Math.floor((props.now-Date.parse(overview.value.latest?.postedAt))/60000));if(!minutes)return c('justNow');if(minutes<60)return `${minutes} ${c('minutesAgo')} ${c('ago')}`;const hours=Math.floor(minutes/60),days=Math.floor(hours/24);return `${days?days+' '+c('daysAgo')+' ':''}${hours%24} ${c('hoursAgo')} ${c('ago')}`;});
 function goLatest(){if(latestDayKey.value){month.value=latestDayKey.value.slice(0,7);selectedDay.value=latestDayKey.value;}}
 function goToday(){month.value=today.value.slice(0,7);selectedDay.value=today.value;}
 function changeMonth(offset){month.value=moveMonth(month.value,offset);selectedDay.value=Object.keys(overview.value.byDay).filter(key=>key.startsWith(month.value+'-')).sort().at(-1)||month.value+'-01';}
