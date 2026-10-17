@@ -6,6 +6,8 @@ A simple **Codex reset announcement and forecast radar**: the latest announcemen
 
 **[Open the website](https://echo-radar.pages.dev/) · [Connect Bark on iPhone](docs/BARK_SETUP.en.md)**
 
+The old long website address automatically redirects to the short URL above, preserving post and forecast links. Cloud Bark subscriptions and alerts continue. If you connected only on the old domain, the short website may show no linked device; paste the same Bark address to restore management without unsubscribing first.
+
 ## Website preview
 
 These are screenshots of the public website. Dates, counts and forecasts are snapshots; visit the website for current values.
