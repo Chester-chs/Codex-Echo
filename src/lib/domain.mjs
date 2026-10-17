@@ -33,6 +33,8 @@ export function normalizeFeed(payload, now = Date.now()) {
           scheduledAt:validDate(item.scheduledAt)?item.scheduledAt:null,
           category:item.category,
           visibilityOnly:item.visibilityOnly===true,
+          approximate:item.approximate===true,
+          isReply:item.isReply===true,replyingTo:item.replyingTo||null,inReplyToId:item.inReplyToId||null,parent:item.parent||null,providerKind:item.providerKind,explicitResetClaim:item.explicitResetClaim===true,
           type: item.category==='schedule'?'scheduled':["automatic", "banked"].includes(item.resetType)
             ? item.resetType
             : "unknown",

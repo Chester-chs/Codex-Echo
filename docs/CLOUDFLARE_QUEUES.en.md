@@ -52,7 +52,7 @@ npx wrangler deploy --config web/wrangler.jsonc
 npx wrangler tail --config web/wrangler.jsonc --format pretty
 ```
 
-Recommended collection is every five minutes for posts/timeline and every minute for `/api/forecast`. Each endpoint is requested at most once per minute; persistent request timestamps fence overlapping cron invocations. Local requests also share a minute cache. The page reads the backend every two minutes; it is not a live X stream. Aim for a few minutes, but **1–3 minutes is not a guarantee**: posts may wait for a five-minute collection tick.
+Public posts `/api/feed`, text archive `/tibo/x` and confirmations `/api/forecast` are checked every minute with persistent permits shared with full collection. The page refreshes every minute; the configured 5/10-minute full collection remains separate. Upstream updates, caching and networking can delay delivery; 1–4 minutes is not guaranteed. See [minute discovery](MINUTE_DISCOVERY.en.md).
 
 `latest_alert` has no stable public schema. The saved snapshot confirms only `kind=reset, state=confirmed`. Unknown warning types are logged, never guessed or pushed. Explicit plans still use the existing post rules; vague “Landing…” text alone does not become a reset commitment. Measurement refers to the provider’s own monitored accounts, not proof of your personal allowance.
 

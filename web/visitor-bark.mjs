@@ -2,7 +2,8 @@ import {countingDb} from './query-budget.mjs';
 import {validAlertAt,KIND_ORDER} from './codex-alerts.mjs';
 import {parseBarkKey,digest,sendBark,barkSettings,ready,forecastKey} from './bark.mjs';
 import {getForecast} from '../src/lib/domain.mjs';
-import {annotateResetPlan,isCurrentPlanNotice,resetNoticeKey} from '../src/lib/reset-plan.mjs';
+import {annotateResetPlan,isCurrentPlanNotice,resetNoticeKey,getResetPlanState} from '../src/lib/reset-plan.mjs';
+import {tiboContext} from './tibo-alerts.mjs';
 
 const BASE='/api/bark/subscription',LOCK='visitor-dispatch:v1',LEASE=180000,DAY=86400000;
 const ORIGINS=new Set(['https://echo-radar.pages.dev','http://127.0.0.1:4174','http://127.0.0.1:5173','http://127.0.0.1:5174']);
@@ -132,13 +133,14 @@ export async function handleVisitorRequest(request,env,{now=Date.now(),fetcher=f
 }
 
 function compact(event){
- const out={};for(const k of ['id','url','category','textSource','textStatus','scheduledAt','resetType','resetTypes','original','translation','postedAt','resetAt','probability','kind','basis','basisZh','windowText','publishedAt','checkedAt','sourceFreshUntil','validUntil','sourceUrl'])if(event[k]!==undefined)out[k]=event[k];
+ const out={};for(const k of ['id','url','category','completionNotice','textSource','textStatus','scheduledAt','approximate','parent','isReply','replyingTo','inReplyToId','providerKind','explicitResetClaim','resetType','resetTypes','original','translation','postedAt','resetAt','probability','kind','basis','basisZh','windowText','publishedAt','checkedAt','sourceFreshUntil','validUntil','sourceUrl'])if(event[k]!==undefined)out[k]=event[k];
  for(const k of ['original','translation','basis','basisZh','windowText'])if(out[k])out[k]=Array.from(out[k]).slice(0,1000).join('');return out;
 }
 export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
  if(!configured(env)||env.BARK_ENABLED!=='true')return {state:'disabled'};
  env={...env,NOTIFY_DB:countingDb(env.NOTIFY_DB)};
  const clock=typeof now==='function'?now:()=>now,n=clock(),db=env.NOTIFY_DB,token=crypto.randomUUID();
+ state=await tiboContext(db,state||{});
  await ensureOwnerSubscription(env,n);
  await db.prepare('INSERT OR IGNORE INTO bark_control(id) VALUES(?)').bind(LOCK).run();
  const lease=await db.prepare('UPDATE bark_control SET lease_token=?,lease_until=? WHERE id=? AND lease_until<=?').bind(token,n+LEASE,LOCK,n).run();if(!lease.meta.changes)return {state:'busy'};
@@ -146,8 +148,9 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
  const fence='EXISTS(SELECT 1 FROM bark_control WHERE id=? AND lease_token=? AND lease_until>?)';
  try{
   // Maintenance gets its own minute so collection, cleanup and dispatch never share a Free-plan budget.
-  if(new Date(n).getUTCMinutes()===37){
+  if(new Date(n).getUTCMinutes()===37&&!await db.prepare("SELECT 1 AS urgent FROM bark_events WHERE kind='alert' AND state IN('pending','retry') AND available<=? LIMIT 1").bind(n).first()){
    await db.prepare('DELETE FROM bark_rates WHERE expires<?').bind(n).run();
+   await db.prepare("DELETE FROM bark_meta WHERE name GLOB 'tibo-posts:seen:*' AND CAST(value AS INTEGER)<?").bind(n-30*DAY).run();
    await db.prepare("DELETE FROM bark_events WHERE updated<? AND state NOT IN('pending','retry','sending')").bind(n-30*DAY).run();
    await db.prepare('DELETE FROM bark_daily WHERE day<?').bind(iso(n-7*DAY).slice(0,10)).run();
    return {state:'maintenance',attempted:0,...(env.BARK_QUEUE?await enqueuePendingBark(env,n):{})};
@@ -157,18 +160,22 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
   if(fresh){
    const resets=(state?.records||[]).map(annotateResetPlan).filter(r=>['reset','schedule'].includes(r.category)&&['automatic','banked'].includes(r.resetType)&&/^\d+$/.test(r.id)&&/^https:\/\/(?:x\.com|twitter\.com)\/(?:thsottiaux|i)\/status\/\d+$/.test(r.url)&&Date.parse(r.postedAt)<=n&&n-Date.parse(r.postedAt)<21600000).slice(0,1000).map(r=>({posted:Date.parse(r.postedAt),event:{...compact(r),noticeKey:resetNoticeKey(r)}}));
    for(let i=0;i<resets.length;i+=100)await db.prepare(`INSERT OR IGNORE INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated)
-    SELECT s.device_hash,json_extract(r.value,'$.event.noticeKey'),'reset',json_extract(r.value,'$.event'),'pending',?,?,? FROM json_each(?) r JOIN bark_subscriptions s JOIN bark_control c ON c.id=s.device_hash WHERE s.reset_alerts=1 AND json_extract(r.value,'$.posted')>=c.baseline_at`).bind(n,n,n,JSON.stringify(resets.slice(i,i+100))).run();
+    SELECT s.device_hash,json_extract(r.value,'$.event.noticeKey'),'reset',json_extract(r.value,'$.event'),'pending',?,?,? FROM json_each(?) r JOIN bark_subscriptions s JOIN bark_control c ON c.id=s.device_hash WHERE s.reset_alerts=1 AND json_extract(r.value,'$.posted')>=c.baseline_at AND json_extract(r.value,'$.posted')>CAST(COALESCE((SELECT value FROM bark_meta WHERE name='tibo-posts:baseline:v1'),'0') AS INTEGER)`).bind(n,n,n,JSON.stringify(resets.slice(i,i+100))).run();
    if(forecast)await db.prepare(`INSERT INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated)
     SELECT s.device_hash,?,'forecast',?,'pending',?,?,? FROM bark_subscriptions s JOIN bark_control c ON c.id=s.device_hash WHERE s.forecast_alerts=1 AND s.threshold<=? AND c.baseline_at<=?
     ON CONFLICT(recipient,event_key) DO UPDATE SET state='pending',available=excluded.available,updated=excluded.updated,payload=excluded.payload WHERE bark_events.state='cancelled' AND bark_events.attempts<3 AND bark_events.code IN('disabled_or_expired','expired_before_dispatch')`).bind(currentKey,JSON.stringify(compact(forecast)),n,n,n,forecast.probability,Date.parse(forecast.publishedAt)).run();
   }
-  await db.prepare(`UPDATE bark_events AS e SET state='cancelled',code='covered_by_codex_reset',updated=? WHERE state IN('pending','retry') AND ${coveredSQL}`).bind(n,n-900000,n-43200000).run();
+  await db.prepare(`UPDATE bark_events AS e SET state='cancelled',code=CASE WHEN e.kind='alert' THEN 'covered_by_earlier_alert' ELSE 'covered_by_codex_reset' END,updated=? WHERE state IN('pending','retry') AND ((${coveredSQL}) OR (${completionCoveredSQL}))`).bind(n,...coverageTimes(n),n-21600000).run();
+  if((state.records||[]).some(r=>r.category==='schedule')){
+   const plan=getResetPlanState(state.records,n),current=plan?.phase==='scheduled'?plan:null;
+   await db.prepare(`UPDATE bark_events SET state='cancelled',code='superseded_or_cancelled',updated=? WHERE state IN('pending','retry') AND (json_extract(payload,'$.category')='schedule' OR json_extract(payload,'$.tweetClass')='plan') AND (json_extract(payload,'$.id')!=? OR json_extract(payload,'$.scheduledAt')!=?)`).bind(n,current?.record.id||'',current?.scheduledAt||'').run();
+  }
   if(env.BARK_QUEUE)return {state:fresh?'checked':'source_stale',...await enqueuePendingBark(env,n)};
   const day=iso(n).slice(0,10);
   const rows=(await db.prepare(`WITH ranked AS(SELECT e.*,s.device_cipher,s.token_hash,s.revision,s.reset_alerts,s.forecast_alerts,s.threshold,s.language,s.last_served,ROW_NUMBER() OVER(PARTITION BY e.recipient ORDER BY CASE e.kind WHEN 'test' THEN 0 WHEN 'alert' THEN 1 WHEN 'reset' THEN 2 ELSE 3 END,e.created) AS rank
    FROM bark_events e JOIN bark_subscriptions s ON s.device_hash=e.recipient WHERE e.state IN('pending','retry') AND e.available<=? AND COALESCE((SELECT attempts FROM bark_daily WHERE recipient=e.recipient AND day=?),0)<20)
    SELECT * FROM ranked WHERE rank=1 ORDER BY CASE kind WHEN 'test' THEN 0 WHEN 'alert' THEN 1 WHEN 'reset' THEN 2 ELSE 3 END,last_served,created,recipient LIMIT 20`).bind(n,day).all()).results;
-  const eligible=(r,time)=>r.kind==='test'?time-r.created<900000:r.kind==='alert'?r.reset_alerts&&validAlertAt(r.event,time):ready(state,time)&&(r.kind==='reset'?r.reset_alerts&&time-Date.parse(r.event.postedAt)<21600000&&isCurrentPlanNotice(r.event,state.records||[],time):r.forecast_alerts&&r.event_key===currentKey&&forecast&&forecast.probability>=r.threshold&&getForecast(forecast,time));
+  const eligible=(r,time)=>r.kind==='test'?time-r.created<900000:r.kind==='alert'?r.reset_alerts&&alertEligible(r.event,state,time):ready(state,time)&&(r.kind==='reset'?r.reset_alerts&&time-Date.parse(r.event.postedAt)<21600000&&isCurrentPlanNotice(r.event,state.records||[],time):r.forecast_alerts&&r.event_key===currentKey&&forecast&&forecast.probability>=r.threshold&&getForecast(forecast,time));
   for(const r of rows)r.event=JSON.parse(r.payload);
   const invalid=rows.filter(r=>!eligible(r,clock())).map(r=>({id:r.recipient,key:r.event_key,attempts:r.attempts}));
   if(invalid.length)await db.prepare(`UPDATE bark_events SET state='cancelled',code='disabled_or_expired',updated=? WHERE state IN('pending','retry') AND EXISTS(SELECT 1 FROM json_each(?) j WHERE json_extract(j.value,'$.id')=recipient AND json_extract(j.value,'$.key')=event_key AND json_extract(j.value,'$.attempts')=attempts) AND ${fence}`).bind(clock(),JSON.stringify(invalid),LOCK,token,clock()).run();
@@ -179,7 +186,7 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
    const global=await db.prepare('UPDATE bark_daily SET attempts=attempts+1 WHERE recipient=? AND day=? AND attempts<600').bind(LOCK,dispatchDay).run();if(!global.meta.changes)break;
    const quota=await db.prepare('UPDATE bark_daily SET attempts=attempts+1 WHERE recipient=? AND day=? AND attempts<20').bind(row.recipient,dispatchDay).run();if(!quota.meta.changes)continue;
    const renewedAt=clock(),renew=await db.prepare('UPDATE bark_control SET lease_until=? WHERE id=? AND lease_token=? AND lease_until>?').bind(renewedAt+LEASE,LOCK,token,renewedAt).run();if(!renew.meta.changes)break;
-   const claimAt=clock(),claim=await db.prepare(`UPDATE bark_events SET state='sending',attempts=attempts+1,updated=? WHERE recipient=? AND event_key=? AND state IN('pending','retry') AND attempts=? AND ${fence} AND EXISTS(SELECT 1 FROM bark_subscriptions WHERE device_hash=? AND token_hash=? AND revision=?)`).bind(claimAt,row.recipient,row.event_key,row.attempts,LOCK,token,claimAt,row.recipient,row.token_hash,row.revision).run();if(!claim.meta.changes)continue;
+   const claimAt=clock(),claim=await db.prepare(`UPDATE bark_events SET state='sending',attempts=attempts+1,updated=? WHERE recipient=? AND event_key=? AND state IN('pending','retry') AND attempts=? AND ${fence} AND ${completionClaim} AND EXISTS(SELECT 1 FROM bark_subscriptions WHERE device_hash=? AND token_hash=? AND revision=?)`).bind(claimAt,row.recipient,row.event_key,row.attempts,LOCK,token,claimAt,claimAt-21600000,row.recipient,row.token_hash,row.revision).run();if(!claim.meta.changes)continue;
    let outcome;
    if(!eligible(row,clock()))outcome={state:'cancelled',code:'expired_before_dispatch'};
    else{
@@ -191,7 +198,7 @@ export async function runVisitorBark(env,state,{now=Date.now,send=sendBark}={}){
       continue;
      }
      if(!eligible(row,clock())||clock()>=renewedAt+LEASE)outcome={state:'cancelled',code:'expired_before_dispatch'};
-     else outcome=await send({kind:row.kind,event:row.kind==='forecast'?forecast:row.event,key:row.event_key},{BARK_DEVICE_KEY:key,BARK_LANGUAGE:row.language});
+     else outcome=await send({kind:row.kind,event:row.kind==='forecast'?forecast:row.event,key:row.event_key,collapseId:(await digest(row.event_key)).slice(0,32)},{BARK_DEVICE_KEY:key,BARK_LANGUAGE:row.language});
     }
     catch{outcome={state:'unknown',code:'transport_uncertain'};}if(outcome.code!=='expired_before_dispatch')attempted++;
    }
@@ -223,11 +230,17 @@ export async function enqueuePendingBark(env,now=Date.now(),db=env.NOTIFY_DB){
   return {queued:rows.length};
  }catch{console.warn(JSON.stringify({event:'bark_queue_enqueue_failed'}));return {queued:0};}
 }
-const coveredSQL=`e.kind='reset' AND json_extract(e.payload,'$.category')!='schedule' AND CAST(COALESCE((SELECT value FROM bark_meta WHERE name='codex-reset:last-ok'),'0') AS INTEGER)>? AND EXISTS(SELECT 1 FROM bark_events a WHERE a.recipient=e.recipient AND a.kind='alert' AND a.state='sent' AND a.updated>? AND json_extract(a.payload,'$.state')='confirmed' AND (json_extract(a.payload,'$.id')=json_extract(e.payload,'$.id') OR (json_extract(e.payload,'$.resetAt') IS NOT NULL AND (json_extract(a.payload,'$.observedAt')=json_extract(e.payload,'$.resetAt') OR json_extract(a.payload,'$.confirmedAt')=json_extract(e.payload,'$.resetAt')))))`;
+const coverageTimes=n=>[n-900000,n-43200000,n-21600000,n-21600000];
+const completionEvent="e.kind='alert' AND json_extract(e.payload,'$.state')='confirmed'";
+const completionCoveredSQL=`${completionEvent} AND EXISTS(SELECT 1 FROM bark_events a WHERE a.recipient=e.recipient AND a.event_key!=e.event_key AND a.state='sent' AND a.updated>? AND ((a.kind='alert' AND json_extract(a.payload,'$.state')='confirmed') OR (a.kind='reset' AND json_extract(a.payload,'$.category')!='schedule' AND (json_extract(a.payload,'$.completionNotice')=1 OR json_extract(a.payload,'$.id')=json_extract(e.payload,'$.id')))))`;
+const coveredSQL=`e.kind='reset' AND json_extract(e.payload,'$.category')!='schedule' AND EXISTS(SELECT 1 FROM bark_events a WHERE a.recipient=e.recipient AND a.kind='alert' AND a.state='sent' AND json_extract(a.payload,'$.state')='confirmed' AND ((CAST(COALESCE((SELECT value FROM bark_meta WHERE name='codex-reset:last-ok'),'0') AS INTEGER)>? AND a.updated>? AND (json_extract(a.payload,'$.id')=json_extract(e.payload,'$.id') OR (a.updated>? AND ABS(julianday(json_extract(a.payload,'$.sourceAt'))-julianday(json_extract(e.payload,'$.postedAt')))*86400000<21600000) OR (json_extract(e.payload,'$.resetAt') IS NOT NULL AND (json_extract(a.payload,'$.observedAt')=json_extract(e.payload,'$.resetAt') OR json_extract(a.payload,'$.confirmedAt')=json_extract(e.payload,'$.resetAt'))))) OR (json_extract(a.payload,'$.tweetClass')='completed' AND a.updated>? AND ABS(julianday(json_extract(a.payload,'$.sourceAt'))-julianday(json_extract(e.payload,'$.postedAt')))*86400000<21600000)))`;
 const awaitingSQL=coveredSQL.replace("a.state='sent'","a.state IN('pending','retry','sending')");
+// A correlated claim prevents two Queue consumers from simultaneously sending completion alerts.
+const completionClaim=`NOT (((bark_events.kind='alert' AND json_extract(bark_events.payload,'$.state')='confirmed') OR (bark_events.kind='reset' AND COALESCE(json_extract(bark_events.payload,'$.completionNotice'),0)=1)) AND EXISTS(SELECT 1 FROM bark_events a WHERE a.recipient=bark_events.recipient AND a.event_key!=bark_events.event_key AND ((a.kind='alert' AND json_extract(a.payload,'$.state')='confirmed') OR (a.kind='reset' AND json_extract(a.payload,'$.category')!='schedule' AND (json_extract(a.payload,'$.completionNotice')=1 OR json_extract(a.payload,'$.id')=json_extract(bark_events.payload,'$.id')))) AND a.state IN('sending','sent','unknown') AND a.updated>?))`;
+function alertEligible(event,state,now,baseline=0){return validAlertAt(event,now,baseline)&&(event.tweetClass!=='plan'||isCurrentPlanNotice({...event,category:'schedule'},state.records||[],now));}
 function queueEligible(row,state,now){
  if(row.kind==='test')return now-row.created<900000;
- if(row.kind==='alert')return row.reset_alerts&&validAlertAt(row.event,now,row.baseline_at);
+ if(row.kind==='alert')return row.reset_alerts&&alertEligible(row.event,state,now,row.baseline_at);
  if(!ready(state,now))return false;
  if(row.kind==='reset')return row.reset_alerts&&Date.parse(row.event.postedAt)<=now&&now-Date.parse(row.event.postedAt)<21600000&&isCurrentPlanNotice(row.event,state.records||[],now);
  return row.kind==='forecast'&&row.forecast_alerts&&row.event_key===row.currentForecastKey&&getForecast(state.forecast,now)?.probability>=row.threshold;
@@ -236,24 +249,25 @@ export async function consumeBarkBatch(batch,env,{now=Date.now,send=sendBark}={}
  const db=countingDb(env.NOTIFY_DB),clock=typeof now==='function'?now:()=>now;
  const summary={event:'bark_queue_batch',size:batch.messages.length,sent:0,retried:0,skipped:0,d1Queries:0};
  let state={};try{state=await env.RADAR?.get('public-v1','json')||{};}catch{}
+ state=await tiboContext(db,state);
  const forecast=getForecast(state.forecast,clock()),currentForecastKey=forecast?await forecastKey(forecast):null;
  for(const message of batch.messages){
   if(!db.queryBudget.reserve(9)){message.retry({delaySeconds:0});summary.retried++;continue;}
   const n=clock(),body=message.body;
   if(!body||typeof body.recipient!=='string'||!/^[a-f0-9]{64}$/.test(body.recipient)||typeof body.eventKey!=='string'||body.eventKey.length>256){message.ack();summary.skipped++;continue;}
   try{
-   const row=await db.prepare(`SELECT e.*,s.device_cipher,s.token_hash,s.revision,s.reset_alerts,s.forecast_alerts,s.threshold,s.language,c.baseline_at,(${coveredSQL}) AS covered,(${awaitingSQL}) AS awaiting FROM bark_events e JOIN bark_subscriptions s ON s.device_hash=e.recipient JOIN bark_control c ON c.id=e.recipient WHERE e.recipient=? AND e.event_key=?`).bind(n-900000,n-43200000,n-900000,n-43200000,body.recipient,body.eventKey).first();
+   const row=await db.prepare(`SELECT e.*,s.device_cipher,s.token_hash,s.revision,s.reset_alerts,s.forecast_alerts,s.threshold,s.language,c.baseline_at,(${coveredSQL}) AS covered,(${awaitingSQL}) AS awaiting,(${completionCoveredSQL}) AS completion_covered FROM bark_events e JOIN bark_subscriptions s ON s.device_hash=e.recipient JOIN bark_control c ON c.id=e.recipient WHERE e.recipient=? AND e.event_key=?`).bind(...coverageTimes(n),...coverageTimes(n),n-21600000,body.recipient,body.eventKey).first();
    if(!row||!['pending','retry','sending'].includes(row.state)){message.ack();summary.skipped++;continue;}
    if(row.state==='sending'&&n-row.updated<=120000){message.retry({delaySeconds:120});summary.retried++;continue;}
    row.event=JSON.parse(row.payload);row.currentForecastKey=currentForecastKey;
    const finish=async(state,code,available=n)=>db.prepare('UPDATE bark_events SET state=?,code=?,available=?,updated=? WHERE recipient=? AND event_key=? AND state=? AND attempts=? AND updated=?').bind(state,code,available,clock(),row.recipient,row.event_key,row.state,row.attempts,row.updated).run();
-   if(row.covered||!queueEligible(row,state,n)||env.BARK_ENABLED!=='true'||!configured(env)){await finish('cancelled',row.covered?'covered_by_codex_reset':'disabled_or_expired');message.ack();summary.skipped++;continue;}
+   if(row.covered||row.completion_covered||!queueEligible(row,state,n)||env.BARK_ENABLED!=='true'||!configured(env)){await finish('cancelled',row.completion_covered?'covered_by_earlier_alert':row.covered?'covered_by_codex_reset':'disabled_or_expired');message.ack();summary.skipped++;continue;}
    if(row.awaiting){message.retry({delaySeconds:60});summary.retried++;continue;}
    if(row.state==='sending'&&env.BARK_RESEND_UNCERTAIN==='false'){await finish('unknown','interrupted');message.ack();summary.skipped++;continue;}
    if(row.attempts>=3){await finish('failed','attempts_exhausted');message.ack();summary.skipped++;continue;}
    if(row.available>n){message.retry({delaySeconds:Math.min(86400,Math.ceil((row.available-n)/1000))});summary.retried++;continue;}
    const claimAt=clock(),attempts=row.attempts+1;
-   const claim=await db.prepare(`UPDATE bark_events SET state='sending',attempts=attempts+1,updated=? WHERE recipient=? AND event_key=? AND state=? AND attempts=? AND updated=? AND EXISTS(SELECT 1 FROM bark_subscriptions WHERE device_hash=? AND token_hash=? AND revision=?)`).bind(claimAt,row.recipient,row.event_key,row.state,row.attempts,row.updated,row.recipient,row.token_hash,row.revision).run();
+   const claim=await db.prepare(`UPDATE bark_events SET state='sending',attempts=attempts+1,updated=? WHERE recipient=? AND event_key=? AND state=? AND attempts=? AND updated=? AND ${completionClaim} AND EXISTS(SELECT 1 FROM bark_subscriptions WHERE device_hash=? AND token_hash=? AND revision=?)`).bind(claimAt,row.recipient,row.event_key,row.state,row.attempts,row.updated,claimAt-21600000,row.recipient,row.token_hash,row.revision).run();
    if(!claim.meta.changes){message.retry({delaySeconds:120});summary.retried++;continue;}
    const save=(result,code,available=claimAt,tries=attempts)=>db.prepare("UPDATE bark_events SET state=?,code=?,available=?,updated=?,attempts=? WHERE recipient=? AND event_key=? AND state='sending' AND attempts=? AND updated=?").bind(result,code,available,clock(),tries,row.recipient,row.event_key,attempts,claimAt).run();
    const day=iso(claimAt).slice(0,10);

@@ -5,6 +5,10 @@ import * as provider from '../backend/codex-reset.mjs';
 const fixture=name=>JSON.parse(readFileSync(new URL('./fixtures/codex-reset-'+name+'.json',import.meta.url)));
 const now=Date.parse(fixture('feed').fetched_at);
 
+test('a shared minute permit is a skipped source, not a provider failure',async()=>{
+ const {collectPublicSources}=await import('../backend/sources.mjs');const result=await collectPublicSources({now:new Date(now).toISOString(),fetcher:async()=>new Response('Unavailable',{status:503}),codexRequest:async()=>{throw Object.assign(new Error('Minute in use'),{code:'minute_budget'});}});assert.ok(result.sources.filter(s=>s.name.startsWith('codexreset-')).every(s=>s.status==='skipped'));
+});
+
 test('optional radar context supplies ordinary posts without becoming reset evidence',()=>{
  const data=fixture('feed'),rows=provider.parseCodexResetFeed(data,now);
  for(const p of data.radar_context){const r=rows.find(r=>r.id===p.id);assert.ok(r);assert.equal(r.visibilityOnly,true);assert.equal(r.category,'post');assert.equal(r.original,p.text);assert.equal(r.resetAt,null);}

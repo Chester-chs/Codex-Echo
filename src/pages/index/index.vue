@@ -691,7 +691,7 @@
                     ? time(focusedRecord.resetAt)
                     : t("notStated")
                 }}</text></view
-              ><view v-if="focusedRecord.scheduledAt"><text>{{ settings.language==='zh'?'计划重置时间（待确认完成）':'Planned reset time (completion unconfirmed)' }}</text><text>{{ time(focusedRecord.scheduledAt) }}</text></view><view
+              ><view v-if="focusedRecord.scheduledAt"><text>{{ focusedRecord.approximate?(settings.language==='zh'?'最晚约（待确认完成）':'By about (completion unconfirmed)'):(settings.language==='zh'?'计划重置时间（待确认完成）':'Planned reset time (completion unconfirmed)') }}</text><text>{{ time(focusedRecord.scheduledAt) }}</text></view><view
                 ><text>{{ t("published") }}</text
                 ><text>{{ time(focusedRecord.postedAt) }}</text></view
               ><view
@@ -1151,7 +1151,7 @@ onMounted(() => {
   refresh();
   loadSubscription();
   tick = setInterval(() => (now.value = Date.now()), 1000);
-  autoRefresh=setInterval(()=>{if(visible&&!settings.demo&&!loading.value)refresh();},120000);
+  autoRefresh=setInterval(()=>{if(visible&&!settings.demo&&!loading.value)refresh();},60000);
 });
 onLoad(options=>{entry=options||{};});
 onShow(()=>{visible=true;now.value=Date.now();if(!loading.value)refresh();});

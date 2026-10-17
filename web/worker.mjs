@@ -1,6 +1,8 @@
 import {countingDb} from './query-budget.mjs';
 import {discoverCodexReset} from './codex-alerts.mjs';
-import {fetchCodexReset} from '../backend/codex-reset.mjs';
+import {readProvider} from './provider-budget.mjs';
+import {discoverTiboPosts} from './tibo-alerts.mjs';
+import {sendBark} from './bark.mjs';
 import {collectPublicSources,enrichOriginal,mergeRecords} from '../backend/sources.mjs';
 import {mergePublic,publicFeed,uniqueForecastHistory} from '../cloud/state.mjs';
 import {translatePublicText} from '../backend/translate.mjs';
@@ -60,13 +62,10 @@ export async function handleRequest(request,env,ctx={},now=Date.now()) {
  } catch {return json({error:'Data temporarily unavailable'},503);}
 }
 
-export async function syncPublic(env,{now=Date.now(),collect=collectPublicSources,enrich=enrichOriginal,translate=translatePublicText}={}) {
+export async function syncPublic(env,{now=Date.now(),collect=collectPublicSources,enrich=enrichOriginal,translate=translatePublicText,fetcher=fetch}={}) {
  const previous=await env.RADAR.get(KEY,'json');
  const backfill=!previous?.backfillComplete;
- const codexRequest=async path=>{
-  if(env.NOTIFY_DB){const permit=await env.NOTIFY_DB.prepare("INSERT INTO bark_meta(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value WHERE CAST(bark_meta.value AS INTEGER)<=? RETURNING value").bind('codex-reset:attempt:'+path,String(now),now-60000).first();if(!permit)throw new Error('Endpoint minute budget already used');}
-  try{return await fetchCodexReset(path,{now});}catch(error){if(error.retryAt&&env.NOTIFY_DB)await env.NOTIFY_DB.prepare('UPDATE bark_meta SET value=? WHERE name=?').bind(String(error.retryAt-60000),'codex-reset:attempt:'+path).run();throw error;}
- };
+ const codexRequest=path=>readProvider(env,path,{now,fetcher});
  const snapshot=await collect({now:new Date(now).toISOString(),backfill,codexRequest});
  let state=mergePublic(previous,snapshot,now);
  if(backfill&&['history','timeline'].every(name=>snapshot.sources?.some(s=>s.name===name&&s.status==='ok')))state.backfillComplete=true;
@@ -83,6 +82,7 @@ export async function syncPublic(env,{now=Date.now(),collect=collectPublicSource
   const pending=state.records.filter(r=>r.original&&!r.translation&&(!r.translationCheckedAt||now-Date.parse(r.translationCheckedAt)>3600000)).slice(0,translationBudget);
   for(const record of pending){record.translationCheckedAt=new Date(now).toISOString();try{record.translation=await translate(record.original);record.translationSource='machine';}catch{}}
  }
+ const latest=await env.RADAR.get(KEY,'json');if(latest)state.records=mergeRecords(latest.records||[],state.records).sort((a,b)=>Date.parse(b.postedAt)-Date.parse(a.postedAt)).slice(0,1000);
  const encoded=JSON.stringify(state);
  if(new TextEncoder().encode(encoded).length>4000000)throw new Error('Public snapshot exceeds storage budget');
  await env.RADAR.put(KEY,encoded);
@@ -103,11 +103,14 @@ export default {
   return handleRequest(request,env,ctx);
  },
  async queue(batch,env){return consumeBarkBatch(batch,env);},
- async scheduled(controller,env,ctx){
+ async scheduled(controller,env,ctx,{now=Date.now(),fetcher=fetch,send=sendBark}={}){
   if(env.NOTIFY_DB)env={...env,NOTIFY_DB:countingDb(env.NOTIFY_DB)};
-  if(controller.cron==='* * * * *'&&env.BARK_VISITORS_ENABLED==='true')await discoverCodexReset(env);
-  let state;try{state=controller.cron==='* * * * *'?await env.RADAR.get(KEY,'json'):await syncPublic(env);}catch{console.error(JSON.stringify({event:'public_sync_failed'}));if(env.BARK_VISITORS_ENABLED==='true'&&controller.cron!=='* * * * *')return;state=await env.RADAR.get(KEY,'json');}
+  if(controller.cron==='* * * * *'&&env.BARK_VISITORS_ENABLED==='true'){
+   await discoverCodexReset(env,{now,fetcher});
+   try{await discoverTiboPosts(env,{now,fetcher});}catch{console.error(JSON.stringify({event:'tweet_discovery_failed'}));}
+  }
+  let state;try{state=controller.cron==='* * * * *'?await env.RADAR.get(KEY,'json'):await syncPublic(env,{now,fetcher});}catch{console.error(JSON.stringify({event:'public_sync_failed'}));if(env.BARK_VISITORS_ENABLED==='true'&&controller.cron!=='* * * * *')return;state={};}
   if(env.BARK_VISITORS_ENABLED==='true'&&controller.cron!=='* * * * *')return;
-  try{console.log(JSON.stringify({event:'bark_check',...await (env.BARK_VISITORS_ENABLED==='true'?runVisitorBark(env,state||{}):runBark(env,state||{}))}));}catch{console.error(JSON.stringify({event:'bark_check_failed'}));}
+  try{console.log(JSON.stringify({event:'bark_check',...await (env.BARK_VISITORS_ENABLED==='true'?runVisitorBark(env,state||{},{now,send}):runBark(env,state||{}))}));}catch{console.error(JSON.stringify({event:'bark_check_failed'}));}
  },
 };

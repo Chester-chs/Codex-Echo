@@ -35,6 +35,21 @@ export function formatBark(job,{language='zh'}={}) {
  if(job.kind==='test'){
   title=zh?'Codex 回响 · 锁屏推送测试':'Codex Echo · Push test';
   body=zh?'这是一条测试通知，不代表发生重置或出现新的预测。\n\n通知由云端发送，关闭网页和电脑后仍可运行。请确认 iPhone 锁屏时能看到这条消息，点击可打开回响网页。':'This is a test, not a reset announcement or a new forecast.\n\nSent by the cloud service, independently of the website and your computer. Please check this message on your iPhone Lock Screen. Tap to open Echo.';
+ }else if(job.kind==='alert'&&e.kind==='tweet'){
+  const label=zh?'来源原话':'Original post',quote=clip(e.original,2000),translation=zh?'\n\n中文译文\n'+clip(chineseText(e.original,e.translation)):'';
+  const parent=e.parent?.original?'\n\n'+(zh?'父帖原话':'Parent post')+'\n'+clip(e.parent.original,1000)+(zh?'\n'+clip(chineseText(e.parent.original,e.parent.translation),1000):''):'';
+  if(e.tweetClass==='plan'){
+   title=zh?'Codex 回响 · 已公布重置计划':'Codex Echo · Planned reset announced';
+   body=(zh?(e.approximate?'最晚约':'计划重置时间'):(e.approximate?'By about':'Planned reset time'))+'\n'+bothTimes(e.scheduledAt,zh)+'\n\n'+(zh?'这是来源公布的计划，不代表已经完成；到点后仍等待完成确认。':'An announced plan, not a completed reset. Completion still needs confirmation.');
+  }else if(e.tweetClass==='commitment'){
+   title=zh?'Codex 回响 · ⚠️ Tibo 预告重置':'Codex Echo · ⚠️ Tibo announced a reset';
+   body=zh?'这是预告，不代表已完成。':'A reset announcement, not a completed reset.';
+  }else{
+   title=zh?'Codex 回响 · ✅ Tibo 确认重置完成':'Codex Echo · ✅ Tibo confirmed reset completion';
+   body=zh?'不代表你的个人账号额度已恢复，以账号显示为准。':'This does not confirm your personal account allowance has recovered. Check your account.';
+  }
+  body+='\n\n'+label+'\n'+quote+parent+translation+'\n\n'+(zh?'发布时间':'Published')+'\n'+bothTimes(e.postedAt||e.sourceAt,zh)+'\n\nData: codex-reset.com';
+  url.hash='/pages/index/index?record='+encodeURIComponent(e.id);
  }else if(job.kind==='alert'){
   title=zh?'Codex 回响 · ✅ Codex 已重置':'Codex Echo · ✅ Codex reset confirmed';
   const method=e.confirmationSource==='operator_observed'?(zh?'codex-reset 对其自有账号的实测；不代表所有账号':'codex-reset measurement on its own accounts; not all accounts'):(zh?'Tibo 明确确认':'Explicit confirmation from Tibo');
@@ -44,7 +59,7 @@ export function formatBark(job,{language='zh'}={}) {
   const plan=interpretResetDirective(e)||(e.category==='schedule'&&Number.isFinite(Date.parse(e.scheduledAt))?{kind:'scheduled',scheduledAt:e.scheduledAt}:null);
   if(plan?.kind==='scheduled'){
    title=zh?'Codex 回响 · 已公布重置计划':'Codex Echo · Planned reset announced';
-   body=zh?`计划重置时间\n${bothTimes(plan.scheduledAt,true)}\n\n来源原话（中文译文）\n${clip(chineseText(e.original,e.translation))}\n\n这是来源公布的计划，不代表已经完成；到点后仍等待完成确认，也不保证你的个人账号额度恢复。\n\n公告发布于\n${bothTimes(e.postedAt,true)}`:`Planned reset time\n${bothTimes(plan.scheduledAt,false)}\n\nOriginal announcement\n${clip(e.original)}\n\nAn announced plan, not a completed reset. Completion still needs confirmation after the target time; personal account availability is not guaranteed.\n\nAnnounced\n${bothTimes(e.postedAt,false)}`;
+   body=zh?`${plan.approximate?'最晚约':'计划重置时间'}\n${bothTimes(plan.scheduledAt,true)}\n\n来源原话（中文译文）\n${clip(chineseText(e.original,e.translation))}\n\n这是来源公布的计划，不代表已经完成；到点后仍等待完成确认，也不保证你的个人账号额度恢复。\n\n公告发布于\n${bothTimes(e.postedAt,true)}`:`${plan.approximate?'By about':'Planned reset time'}\n${bothTimes(plan.scheduledAt,false)}\n\nOriginal announcement\n${clip(e.original)}\n\nAn announced plan, not a completed reset. Completion still needs confirmation after the target time; personal account availability is not guaranteed.\n\nAnnounced\n${bothTimes(e.postedAt,false)}`;
    if(e.textSource?.startsWith('https://codex-reset.com/'))body+='\n\nData: codex-reset.com';
    url.hash='/pages/index/index?record='+encodeURIComponent(e.id);
    return {title,body,group:zh?'Codex 回响':'Codex Echo',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};

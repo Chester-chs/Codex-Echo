@@ -1,0 +1,120 @@
+{
+  "code": 200,
+  "message": "OK",
+  "tweet": {
+    "url": "https://x.com/thsottiaux/status/2086972802457063486",
+    "id": "2086972802457063486",
+    "text": "Hi.\n\nIt is done.",
+    "raw_text": {
+      "text": "Hi.\n\nIt is done.",
+      "display_text_range": [
+        0,
+        16
+      ],
+      "facets": []
+    },
+    "author": {
+      "screen_name": "thsottiaux",
+      "url": "https://x.com/thsottiaux",
+      "id": "1953337039510003712",
+      "followers": 884047,
+      "following": 76,
+      "likes": 10475,
+      "media_count": 153,
+      "name": "Tibo",
+      "description": "Codex & ChatGPT @OpenAI",
+      "raw_description": {
+        "text": "Codex & ChatGPT @OpenAI",
+        "facets": []
+      },
+      "location": "",
+      "banner_url": "",
+      "avatar_url": "https://pbs.twimg.com/profile_images/2093807917833281537/2yBgpwVV_200x200.jpg",
+      "joined": "Thu Aug 07 06:07:07 +0000 2025",
+      "protected": false,
+      "website": null,
+      "verification": {
+        "verified": true,
+        "verified_at": null,
+        "type": "individual"
+      },
+      "avatar_color": null
+    },
+    "replies": 1538,
+    "retweets": 469,
+    "likes": 13446,
+    "bookmarks": 288,
+    "quotes": 425,
+    "created_at": "Tue Aug 11 00:27:44 +0000 2026",
+    "created_timestamp": 1786408064,
+    "views": 1528927,
+    "is_note_tweet": false,
+    "community_note": null,
+    "lang": "en",
+    "replying_to": null,
+    "replying_to_status": null,
+    "quote": {
+      "url": "https://x.com/blueemi99/status/2086902321108205926",
+      "id": "2086902321108205926",
+      "text": "So what about our reset?",
+      "raw_text": {
+        "text": "So what about our reset?",
+        "display_text_range": [
+          0,
+          24
+        ],
+        "facets": []
+      },
+      "author": {
+        "screen_name": "blueemi99",
+        "url": "https://x.com/blueemi99",
+        "id": "1778842279442055168",
+        "followers": 4289,
+        "following": 2351,
+        "likes": 151763,
+        "media_count": 684,
+        "name": "bluedev",
+        "description": "building things mostly with ai and posting about them",
+        "raw_description": {
+          "text": "building things mostly with ai and posting about them",
+          "facets": []
+        },
+        "location": "",
+        "banner_url": "https://pbs.twimg.com/profile_banners/1778842279442055168/1763257777",
+        "avatar_url": "https://pbs.twimg.com/profile_images/2046941428840853505/mlwLn3EF_200x200.jpg",
+        "joined": "Fri Apr 12 17:47:19 +0000 2024",
+        "protected": false,
+        "website": {
+          "url": "https://tasteskill.dev",
+          "display_url": "tasteskill.dev"
+        },
+        "verification": {
+          "verified": true,
+          "verified_at": null,
+          "type": "individual"
+        },
+        "avatar_color": null
+      },
+      "replies": 47,
+      "retweets": 7,
+      "likes": 963,
+      "bookmarks": 22,
+      "quotes": 3,
+      "created_at": "Mon Aug 10 19:47:40 +0000 2026",
+      "created_timestamp": 1786391260,
+      "views": 1318836,
+      "is_note_tweet": false,
+      "community_note": null,
+      "lang": "en",
+      "replying_to": null,
+      "replying_to_status": null,
+      "twitter_card": "tweet",
+      "color": null,
+      "provider": "twitter",
+      "reposted_by": null
+    },
+    "color": null,
+    "provider": "twitter",
+    "reposted_by": null
+  }
+}

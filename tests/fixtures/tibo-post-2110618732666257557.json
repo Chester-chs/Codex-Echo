@@ -1,0 +1,117 @@
+{
+  "code": 200,
+  "message": "OK",
+  "tweet": {
+    "url": "https://x.com/thsottiaux/status/2110618732666257557",
+    "id": "2110618732666257557",
+    "text": "Done and dusted",
+    "raw_text": {
+      "text": "Done and dusted",
+      "display_text_range": [
+        0,
+        15
+      ],
+      "facets": []
+    },
+    "author": {
+      "screen_name": "thsottiaux",
+      "url": "https://x.com/thsottiaux",
+      "id": "1953337039510003712",
+      "followers": 884047,
+      "following": 76,
+      "likes": 10475,
+      "media_count": 153,
+      "name": "Tibo",
+      "description": "Codex & ChatGPT @OpenAI",
+      "raw_description": {
+        "text": "Codex & ChatGPT @OpenAI",
+        "facets": []
+      },
+      "location": "",
+      "banner_url": "",
+      "avatar_url": "https://pbs.twimg.com/profile_images/2093807917833281537/2yBgpwVV_200x200.jpg",
+      "joined": "Thu Aug 07 06:07:07 +0000 2025",
+      "protected": false,
+      "website": null,
+      "verification": {
+        "verified": true,
+        "verified_at": null,
+        "type": "individual"
+      },
+      "avatar_color": null
+    },
+    "replies": 1056,
+    "retweets": 141,
+    "likes": 5907,
+    "bookmarks": 82,
+    "quotes": 139,
+    "created_at": "Thu Oct 15 06:28:13 +0000 2026",
+    "created_timestamp": 1792045693,
+    "views": 903301,
+    "is_note_tweet": false,
+    "community_note": null,
+    "lang": "en",
+    "replying_to": null,
+    "replying_to_status": null,
+    "quote": {
+      "url": "https://x.com/thsottiaux/status/2110595554036400151",
+      "id": "2110595554036400151",
+      "text": "Landing within the next 2 hours",
+      "raw_text": {
+        "text": "Landing within the next 2 hours",
+        "display_text_range": [
+          0,
+          31
+        ],
+        "facets": []
+      },
+      "author": {
+        "screen_name": "thsottiaux",
+        "url": "https://x.com/thsottiaux",
+        "id": "1953337039510003712",
+        "followers": 884047,
+        "following": 76,
+        "likes": 10475,
+        "media_count": 153,
+        "name": "Tibo",
+        "description": "Codex & ChatGPT @OpenAI",
+        "raw_description": {
+          "text": "Codex & ChatGPT @OpenAI",
+          "facets": []
+        },
+        "location": "",
+        "banner_url": "",
+        "avatar_url": "https://pbs.twimg.com/profile_images/2093807917833281537/2yBgpwVV_200x200.jpg",
+        "joined": "Thu Aug 07 06:07:07 +0000 2025",
+        "protected": false,
+        "website": null,
+        "verification": {
+          "verified": true,
+          "verified_at": null,
+          "type": "individual"
+        },
+        "avatar_color": null
+      },
+      "replies": 507,
+      "retweets": 120,
+      "likes": 3818,
+      "bookmarks": 53,
+      "quotes": 169,
+      "created_at": "Thu Oct 15 04:56:07 +0000 2026",
+      "created_timestamp": 1792040167,
+      "views": 1478018,
+      "is_note_tweet": false,
+      "community_note": null,
+      "lang": "en",
+      "replying_to": "thsottiaux",
+      "replying_to_status": "2110595484180214059",
+      "twitter_card": "tweet",
+      "color": null,
+      "provider": "twitter",
+      "reposted_by": null
+    },
+    "color": null,
+    "provider": "twitter",
+    "reposted_by": null
+  }
+}

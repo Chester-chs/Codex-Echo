@@ -1,0 +1,218 @@
+[
+  {
+    "at": "2026-10-15T04:56Z",
+    "text": "Landing within the next 2 hours",
+    "expected": {
+      "kind": "plan",
+      "scope": "automatic",
+      "scheduledAt": "2026-10-15T06:56:00.000Z",
+      "approximate": true
+    },
+    "reply": {
+      "replyingTo": "thsottiaux",
+      "isReply": true,
+      "parent": {
+        "original": "The reports of my reset button being lost…"
+      }
+    }
+  },
+  {
+    "at": "2026-10-13T01:03Z",
+    "text": "Global reset landing by EOD PST time. Enjoy",
+    "expected": {
+      "kind": "plan",
+      "scope": "automatic",
+      "scheduledAt": "2026-10-13T06:59:00.000Z",
+      "approximate": true
+    },
+    "reply": {
+      "replyingTo": "thsottiaux",
+      "isReply": true,
+      "parent": {
+        "original": "Day 8/ Reset"
+      }
+    }
+  },
+  {
+    "at": "2026-10-10T22:16Z",
+    "text": "Global reset by EOD. May the tokens do good things for you.",
+    "expected": {
+      "kind": "plan",
+      "scope": "automatic",
+      "scheduledAt": "2026-10-11T06:59:00.000Z",
+      "approximate": true
+    },
+    "reply": {
+      "replyingTo": "thsottiaux",
+      "isReply": true,
+      "parent": {
+        "original": "Day 6/ Reset"
+      }
+    }
+  },
+  {
+    "at": "2026-10-07T19:19Z",
+    "text": "Will be there by EOD PST.",
+    "reply": {
+      "isReply": true,
+      "replyingTo": "thsottiaux",
+      "parent": {
+        "original": "Day 3/ Loading a banked reset in paid accounts."
+      }
+    },
+    "expected": {
+      "kind": "plan",
+      "scope": "banked",
+      "scheduledAt": "2026-10-08T06:59:00.000Z",
+      "approximate": true
+    }
+  },
+  {
+    "at": "2026-10-02T02:14Z",
+    "text": "Global reset landing tomorrow 10am PST for all paid ChatGPT …",
+    "expected": {
+      "kind": "plan",
+      "scope": "automatic",
+      "scheduledAt": "2026-10-02T17:00:00.000Z",
+      "approximate": false
+    }
+  },
+  {
+    "at": "2026-08-30T19:24Z",
+    "text": "Your Codex and ChatGPT Work reset will land at 6pm PST. …",
+    "expected": {
+      "kind": "plan",
+      "scope": "automatic",
+      "scheduledAt": "2026-08-31T01:00:00.000Z",
+      "approximate": false
+    }
+  },
+  {
+    "at": "2026-08-21T23:40Z",
+    "text": "The banked reset will be there by 8pm. For all paid users …",
+    "expected": {
+      "kind": "plan",
+      "scope": "banked",
+      "scheduledAt": "2026-08-22T03:00:00.000Z",
+      "approximate": true
+    }
+  },
+  {
+    "at": "2026-10-13T01:03Z",
+    "text": "Day 8/ Reset",
+    "expected": {
+      "kind": "commitment",
+      "scope": "automatic"
+    }
+  },
+  {
+    "at": "2026-10-15T06:28Z",
+    "text": "Done and dusted https://t.co/example",
+    "expected": {
+      "kind": "completed",
+      "scope": "automatic"
+    }
+  },
+  {
+    "at": "2026-10-13T05:06Z",
+    "text": "What would you like with your side of reset? It's done. https://t.co/example",
+    "expected": {
+      "kind": "completed",
+      "scope": "automatic"
+    }
+  },
+  {
+    "at": "2026-10-11T04:01Z",
+    "text": "Put the reset in the bag. All propagated. https://t.co/example",
+    "expected": {
+      "kind": "completed",
+      "scope": "automatic"
+    }
+  },
+  {
+    "at": "2026-10-08T03:44Z",
+    "text": "Confirmed landed across all accounts. How are we doing so far?",
+    "expected": {
+      "kind": "completed",
+      "scope": "automatic"
+    }
+  },
+  {
+    "at": "2026-08-11T00:27Z",
+    "text": "Hi.\n\nIt is done. https://t.co/example",
+    "expected": {
+      "kind": "completed",
+      "scope": "automatic"
+    }
+  },
+  {
+    "at": "2026-10-16T04:30Z",
+    "text": "@maria_rcks Can’t argue with that, Let’s break the cycle.",
+    "expected": null
+  },
+  {
+    "at": "2026-09-26T21:41Z",
+    "text": "@giadotai Sorry Gia. More resets coming next week",
+    "expected": null
+  },
+  {
+    "at": "2026-10-06T21:07Z",
+    "text": "Four updates or a reset. Or both. How was day 2.",
+    "expected": null
+  },
+  {
+    "at": "2026-10-15T04:55Z",
+    "text": "The reports of my reset button being lost are greatly exaggerated",
+    "expected": null
+  },
+  {
+    "at": "2026-10-13T06:21Z",
+    "text": "Good plans are simple. I have one that should result in significantly …",
+    "expected": null
+  },
+  {
+    "at": "2026-10-17T12:00Z",
+    "text": "We might reset tomorrow if things go well",
+    "expected": null
+  },
+  {
+    "at": "2026-10-17T12:00Z",
+    "text": "Resetting the database tonight",
+    "expected": null
+  },
+  {
+    "at": "2026-10-13T05:06Z",
+    "text": "Mashed @poteto on the house.",
+    "reply": {
+      "isReply": true,
+      "replyingTo": "thsottiaux",
+      "parent": {
+        "original": "What would you like with your side of reset? It's done."
+      }
+    },
+    "expected": null
+  },
+  {
+    "at": "2026-10-04T20:35Z",
+    "text": "I challenge you to do the same https://t.co/example",
+    "reply": {
+      "isReply": true,
+      "replyingTo": "poteto"
+    },
+    "expected": null
+  },
+  {
+    "at": "2026-10-06T21:03Z",
+    "text": "I do like giving resets",
+    "reply": {
+      "isReply": true,
+      "replyingTo": "The_Alex"
+    },
+    "expected": null
+  },
+  {
+    "at": "2026-10-17T00:14Z",
+    "text": "What is ChatGPT Space, that is the question. …",
+    "expected": null
+  }
+]

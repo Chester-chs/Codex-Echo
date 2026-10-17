@@ -94,7 +94,7 @@ export function mergeRecords(...groups) {
  const map=new Map();
  for(const record of groups.flat()){
   if(!record?.id)continue;
-  const previous=map.get(record.id);if(!previous){map.set(record.id,{...record});continue;}
+  const previous=map.get(record.id);if(!previous){map.set(record.id,{...record,visibilityOnly:record.visibilityOnly===true});continue;}
   const rank={missing:0,'source-copy':1,truncated:2,community:2,mirror:3,verified:4};
   const prefer=(rank[record.textStatus]||0)>(rank[previous.textStatus]||0)||((rank[record.textStatus]||0)===(rank[previous.textStatus]||0)&&record.original?.length>previous.original?.length);
   const retainedMention=record.original?.startsWith('@')&&record.original.replace(/^(?:@\w+\s+)+/,'')===previous.original;
@@ -106,7 +106,10 @@ export function mergeRecords(...groups) {
   const metadata=record.visibilityOnly&&!visibilityOnly?previous:record;
   map.set(record.id,{...previous,...metadata,visibilityOnly,resetType:record.resetType==='unknown'?previous.resetType:record.resetType,category,original,translation,textStatus:prefer?record.textStatus:previous.textStatus,textSource:prefer?record.textSource:previous.textSource,postedAt:previous.timeBasis==='api'?previous.postedAt:record.postedAt,timeBasis:previous.timeBasis==='api'?'api':record.timeBasis,detectedAt:record.detectedAt||previous.detectedAt});
  }
- return [...map.values()].map(record=>annotateResetPlan(!record.visibilityOnly&&postId(record.url)===record.id&&reviewedAnnouncements[record.id]?{...record,...reviewedAnnouncements[record.id],classificationBasis:'reviewed-original'}:record));
+ return [...map.values()].map(record=>{
+  const parent=map.get(record.inReplyToId);if(parent&&parent.id!==record.id)record={...record,parent:{id:parent.id,url:parent.url,postedAt:parent.postedAt,original:parent.original,resetType:parent.resetType}};
+  return annotateResetPlan(!record.visibilityOnly&&postId(record.url)===record.id&&reviewedAnnouncements[record.id]?{...record,...reviewedAnnouncements[record.id],classificationBasis:'reviewed-original'}:record);
+ });
 }
 export async function fetchText(url,{fetcher=fetch,headers={}}={}) {
  const response=await fetcher(url,{headers:{'User-Agent':'PulseRadar/0.2 (public-source-monitor)',...headers},signal:AbortSignal.timeout(15000),redirect:'manual'});
@@ -130,7 +133,7 @@ export async function collectPublicSources({fetcher=fetch,now=new Date().toISOSt
   (async()=>parseCodexResetArchive(await codexRequest('/tibo/x'),Date.parse(now)))()
  ]);
  const names=['tokenusage','history','timeline','watch','builders','codexreset-feed','codexreset-timeline','codexreset-archive'];
- results.forEach((r,i)=>{sources.push({name:names[i],status:r.status==='fulfilled'?'ok':'error',checkedAt:now});if(r.status==='fulfilled'){if(i===3)forecast=r.value;else groups.push(r.value);}else console.warn(JSON.stringify({event:'source_error',source:names[i],message:String(r.reason?.message||'Unknown error').slice(0,180)}));});
+ results.forEach((r,i)=>{sources.push({name:names[i],status:r.status==='fulfilled'?'ok':r.reason?.code==='minute_budget'?'skipped':'error',checkedAt:now});if(r.status==='fulfilled'){if(i===3)forecast=r.value;else groups.push(r.value);}else if(r.reason?.code!=='minute_budget')console.warn(JSON.stringify({event:'source_error',source:names[i],message:String(r.reason?.message||'Unknown error').slice(0,180)}));});
  return {records:mergeRecords(...groups),forecast,sources,checkedAt:now};
 }
 export async function enrichOriginal(record,{fetcher=fetch,bearer='',mirror=true,now=new Date().toISOString()}={}) {

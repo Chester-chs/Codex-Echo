@@ -15,7 +15,7 @@ export function parseCodexResetFeed(json,now=Date.now()){
  if(json?.source!=='x-api'||json.stale===true||!validTime(json.fetched_at)||Date.parse(json.fetched_at)>n+60000||n-Date.parse(json.fetched_at)>1800000||!Array.isArray(json.tweets))bad();
  const records=json.tweets.map(p=>{
   if(!validTime(p.at)||Date.parse(p.at)>n+60000||!text(p.text)||typeof p.kind!=='string'||typeof p.explicit_reset_claim!=='boolean'||typeof p.is_reply!=='boolean')bad();
-  return {...base(p.id,p.url,p.at),original:entities(p.text),category:'post',textStatus:'mirror',textSource:CODEX_RESET+'/api/feed',isReply:p.is_reply,inReplyToId:p.in_reply_to_tweet_id||null,providerKind:p.kind};
+  return {...base(p.id,p.url,p.at),original:entities(p.text),category:'post',textStatus:'mirror',textSource:CODEX_RESET+'/api/feed',isReply:p.is_reply,replyingTo:typeof p.replying_to==='string'?p.replying_to:null,inReplyToId:p.in_reply_to_tweet_id||null,conversationId:p.conversation_id||null,providerKind:p.kind,explicitResetClaim:p.explicit_reset_claim};
  });
  // Optional, undocumented context must never invalidate the announcement feed.
  const seen=new Set(records.map(r=>r.id));

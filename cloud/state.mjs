@@ -18,7 +18,7 @@ export function mergePublic(previous,snapshot,now=Date.now()){
  state.records=mergeRecords(state.records,snapshot.records||[]).map(r=>({...r,firstSeenAt:r.firstSeenAt||iso(now)}));
  if(!state.baseline&&state.records.length)state.baseline=now;
  const old=state.sources;
- state.sources=(snapshot.sources||old).map(s=>({...s,lastSuccessAt:s.status==='ok'?s.checkedAt:old.find(p=>p.name===s.name)?.lastSuccessAt||null}));
+ state.sources=(snapshot.sources||old).map(s=>s.status==='skipped'?(old.find(p=>p.name===s.name)||{...s,status:'pending'}):({...s,lastSuccessAt:s.status==='ok'?s.checkedAt:old.find(p=>p.name===s.name)?.lastSuccessAt||null}));
  if(snapshot.sources?.some(s=>s.status==='ok'))state.lastSuccessAt=snapshot.checkedAt;
  state.lastAttemptAt=snapshot.checkedAt;
  if(snapshot.forecast!==undefined){

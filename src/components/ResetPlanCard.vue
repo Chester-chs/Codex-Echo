@@ -1,10 +1,10 @@
 <template>
  <article class="reset-plan-card" :class="plan.phase" :aria-label="copy.kicker">
   <div class="reset-plan-kicker"><span class="reset-plan-dot"></span>{{ copy.kicker }}<span class="reset-plan-tag">{{ copy[plan.phase] }}</span></div>
-  <h2>{{ plan.phase==='scheduled'?copy.countdown:copy[plan.phase] }}</h2>
+  <h2>{{ plan.phase==='scheduled'?(plan.approximate?(language==='zh'?'距预计最晚时间':'Until the estimated deadline'):copy.countdown):copy[plan.phase] }}</h2>
   <div v-if="plan.phase==='scheduled'" class="reset-plan-countdown" role="timer">{{ countdown }}</div>
   <p v-else class="reset-plan-state">{{ plan.phase==='awaiting'?copy.waiting:plan.phase==='completed'?copy.done:copy.cancelledHelp }}</p>
-  <div class="reset-plan-time"><span>{{ copy.target }}</span><strong>{{ time(plan.scheduledAt) }}</strong><span>{{ zoneName }}</span></div>
+  <div class="reset-plan-time"><span>{{ plan.approximate?(language==='zh'?'最晚约':'By about'):copy.target }}</span><strong>{{ time(plan.scheduledAt) }}</strong><span>{{ zoneName }}</span></div>
   <p class="reset-plan-explainer">{{ copy.explainer }}</p>
   <p v-if="stale" class="reset-plan-stale">{{ copy.stale }}</p>
   <div class="reset-plan-footer"><span>Tibo · @thsottiaux</span><WebButton class="base-button" @click="$emit('detail',plan.record)">{{ copy.source }} ↗</WebButton><WebButton v-if="plan.confirmation" class="base-button" @click="$emit('detail',plan.confirmation)">{{ copy.confirmation }} ↗</WebButton></div>
