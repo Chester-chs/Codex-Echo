@@ -1,6 +1,6 @@
 # Codex 回响：从零配置自己的 Bark 提醒
 
-**简体中文** | [English](GITHUB_BARK.en.md) · [返回首页](../README.md)
+**简体中文** | [English](GITHUB_BARK.en.md) · [返回首页](../README.zh-CN.md)
 
 第一次使用 GitHub 也可以跟着完成。程序在 GitHub 上检查 Codex 重置公告与来源预测，推送到自己的 iPhone。**手机推送只使用 Bark；关闭网页、关闭电脑后仍可运行。**
 

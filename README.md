@@ -1,131 +1,131 @@
-# Codex 回响 · Codex Echo
+# Codex Echo · Codex 回响
 
-**简体中文** | [English](README.en.md)
+**English** | [简体中文](README.zh-CN.md)
 
-在一页查看 **Codex 最近一次重置公告、重置计划、历史日历和 Tibo 推文**，也可以用 **Bark** 接收 iPhone 锁屏提醒。支持中文和英文，无需注册即可浏览。
+See **the latest Codex reset announcement, upcoming plans, a history calendar and collected Tibo posts** on one page. Connect **Bark** for iPhone Lock Screen alerts. The website supports Chinese and English, with no account required to browse.
 
-**[打开网页](https://echo-radar.pages.dev/) · [iPhone 提醒设置教程](docs/BARK_SETUP.md)**
+**[Open the website](https://echo-radar.pages.dev/) · [Set up iPhone alerts](docs/BARK_SETUP.en.md)**
 
-## 能做什么
+## What you can do
 
-- **查看重置动向**：突出最近可用的重置时间并标明依据，12 小时内显示距今多久，之后显示月日；有明确时间的重置计划会显示倒计时。
-- **了解完成状态**：区分等待确认、来源实测已重置和 Tibo 明确确认完成，并提供来源链接。
-- **回看历史**：用日历查看公告发布日期，浏览公告统计和已收录的 Tibo 推文。
-- **接收手机提醒**：自行绑定 Bark，选择重置或预测提醒、调整预测阈值和推送语言，随时退订。
+- **Follow reset news:** see the latest available reset timestamp, with its source basis shown. Times under 12 hours old are relative; older times use a date. Plans with a recognizable time show a countdown.
+- **Check completion status:** distinguish awaiting confirmation, a reset observed by a source and Tibo's explicit confirmation, with links to the evidence.
+- **Explore history:** browse announcements by publication date, view statistics and read collected Tibo posts.
+- **Get phone alerts:** connect your own Bark, choose reset or forecast alerts, adjust the forecast threshold and notification language, and unsubscribe at any time.
 
-这是基于公开来源的独立项目，与 OpenAI 无隶属关系。它不登录或监测你的 ChatGPT 账号；个人额度请以账号实际显示为准。
+This is an independent project based on public sources, unaffiliated with OpenAI. It does not sign in to or monitor your ChatGPT account. Check your account for your personal allowance.
 
-## 页面预览
+## Preview
 
-截图中的日期、数量和预测值仅供展示，最新信息请查看网页。
+Dates, counts and forecasts in these screenshots are illustrative snapshots. Visit the website for current information.
 
-![Codex 回响桌面网页：最近重置时间、预测和历史统计](docs/images/desktop-en.png)
+![Codex Echo desktop: latest reset time, forecast and history statistics](docs/images/desktop-en.png)
 
 <details>
-<summary>查看手机布局与提醒设置</summary>
+<summary>View the mobile layout and alert settings</summary>
 
-<img src="docs/images/mobile-en.png" alt="Codex 回响手机布局" width="390" />
+<img src="docs/images/mobile-en.png" alt="Codex Echo mobile layout" width="390" />
 
-![手机云端提醒设置](docs/images/cloud-alerts-en.png)
+![Phone alert settings](docs/images/cloud-alerts-en.png)
 
 </details>
 
-## 开始使用
+## Get started
 
-只想查看公告和推文，直接[打开网页](https://echo-radar.pages.dev/)即可。想在 iPhone 上接收提醒，请完成以下设置：
+To browse announcements and posts, simply [open the website](https://echo-radar.pages.dev/). To receive iPhone alerts:
 
-1. 安装并打开 **Bark**，允许通知。在 iPhone「设置 → 通知 → Bark」中勾选「锁定屏幕」。可通过 [Bark 官方项目](https://github.com/Finb/Bark) 找到 App Store 下载链接。
-2. 复制 Bark 应用中的**推送地址**。请使用自己的真实地址，不要公开分享。
-3. 打开网页，在 Tibo 推文列表下方展开 **「手机云端提醒」**，粘贴地址，选择提醒类型、阈值和语言，点击 **「绑定并保存」**。
-4. 点击 **「发送测试通知」** 一次，然后关闭网页并锁屏，确认手机实际收到消息。
+1. Install and open **Bark**, then allow notifications. In iPhone **Settings → Notifications → Bark**, enable **Lock Screen**. You can find its App Store link in the [official Bark project](https://github.com/Finb/Bark).
+2. Copy your **push address** from Bark. Use your own real address and keep it private.
+3. Open the website and expand **Phone alerts from the cloud** below the Tibo post list. Paste the address, choose alert types, threshold and language, then select **Connect and save**.
+4. Select **Send a test notification** once, close the website and lock your phone. Confirm that the message actually appears on your phone.
 
-**绑定成功后，不需要保持网页开启，也不需要电脑开机。** 云端会继续检查新消息并发送提醒；iPhone 需要联网，并允许 Bark 显示通知。仅浏览网页不会自动订阅。
+**Once connected, you do not need to keep the website open or your computer switched on.** The cloud continues checking for new messages and sending alerts. Your iPhone needs internet access and permission to display Bark notifications. Browsing the website alone does not subscribe you.
 
-无需 GitHub 账号、下载代码或购买服务器。逐步操作、地址格式、保存与退订方法，以及收不到通知时的排查，见 **[iPhone 接入 Bark 教程](docs/BARK_SETUP.md)**。
+No GitHub account, code download or purchased server is needed. For exact screen locations, address examples, saving, unsubscribing and troubleshooting, follow the **[Bark setup guide for iPhone](docs/BARK_SETUP.en.md)**.
 
-### 如何选择提醒
+### Choose your alerts
 
-| 设置 | 作用 |
+| Setting | What it does |
 |---|---|
-| **重置公告** | 接收明确的重置预告、计划和完成提醒。计划公布时提醒一次，后续检测到对应的完成证据后再提醒一次 |
-| **来源预测** | 接收有效且达到所设阈值的新预测；预测不是已确定的重置计划 |
-| **预测提醒阈值** | 可选 40%–90%，每档 5%。例如设为 75%，只有概率达到或超过 75% 才满足条件；不影响重置公告提醒 |
-| **推送语言** | 中文或 English，可与网页显示语言分别设置 |
+| **Reset announcements** | Alerts for definite reset commitments, plans and completion. A new plan triggers one alert; matching completion evidence triggers a separate alert later |
+| **Source forecasts** | Alerts for new, valid forecasts that meet your threshold. A forecast is not a confirmed reset plan |
+| **Forecast alert threshold** | Choose 40%–90% in steps of 5. At 75%, for example, a forecast must reach or exceed 75% to qualify. This does not affect reset announcement alerts |
+| **Notification language** | Chinese or English, set independently of the website language |
 
-首次绑定不补发历史消息。普通日常推文和回复别人的推文仅供浏览，不会触发重置提醒。同一计划的来源实测与后续 Tibo 确认合并为一次完成提醒。
+Initial connection does not replay historical messages. Everyday posts and replies to other people are for browsing only and do not trigger reset alerts. A source observation and Tibo's later confirmation of the same plan share one completion alert.
 
-### 修改设置与退订
+### Change settings or unsubscribe
 
-回到「手机云端提醒」，修改后点击 **「保存提醒设置」**。关闭两类提醒并保存可暂停推送；点击 **「退订并删除地址」** 可退出订阅，已经在发送的通知可能仍会到达。每个人管理自己的设备和设置，不会修改其他人的提醒。
+Return to **Phone alerts from the cloud**, make changes and select **Save alert preferences**. Turn off both alert types and save to pause delivery. Select **Unsubscribe and delete address** to leave; notifications already being sent may still arrive. Each person manages their own device and preferences without changing anyone else's alerts.
 
-更换浏览器或清除浏览器数据后，可以再次粘贴同一 Bark 地址恢复管理。Bark 地址可以用于向你的手机发消息，请妥善保管，不要提交到公开仓库或评论中。
+If you switch browsers or clear browser data, paste the same Bark address again to restore management. Anyone with that address can use it to send messages to your phone, so keep it private and out of public repositories or comments.
 
-### Bark 和页面提醒有什么区别
+### Bark versus page notifications
 
-| 提醒方式 | 使用要求 |
+| Method | Requirement |
 |---|---|
-| **Bark 云端提醒（推荐）** | 绑定并保存后，关闭网页、电脑关机仍可接收；手机需联网并允许通知 |
-| 页面提醒 | **必须保持页面开启并运行**；关闭页面后停止，切后台或锁屏也可能暂停 |
+| **Bark cloud alerts (recommended)** | Once connected and saved, alerts work with the website closed and computer shut down. Your phone needs internet access and notification permission |
+| Page notifications | **Keep the page open and running.** Closing stops them; backgrounding or locking may suspend them |
 
-两处设置独立，开启页面提醒不会自动绑定 Bark。网页订阅目前免费试运行，最多支持 30 台设备；每台按 UTC 日期每天最多 20 次发送尝试，测试和重试也计入。测试通知每 10 分钟最多一次。
+These settings are independent: enabling page notifications does not connect Bark. Website subscriptions are currently a free trial for up to 30 devices, with at most 20 send attempts per device per UTC day, including tests and retries. You can send one test notification every 10 minutes.
 
-## 如何理解重置状态
+## Understand reset status
 
-| 页面状态 | 含义 |
+| Website status | Meaning |
 |---|---|
-| **已公布重置计划** | 来源给出了可识别的重置时间，页面据此倒计时；不表示额度已经恢复 |
-| **等待完成确认** | 计划时间已到，但尚未收到对应的完成证据，不会仅因到点发送完成提醒 |
-| **来源实测已重置** | 第三方来源报告其监测账号已重置，页面停止倒计时，并注明观测时间和来源；这与 Tibo 的确认分开标注 |
-| **确认完成** | 已收录 Tibo 明确确认完成的消息，可打开原文核对 |
+| **Planned reset announced** | The source provides a recognizable reset time, so the page shows a countdown. This does not mean allowance has already recovered |
+| **Awaiting confirmation** | The planned time has passed without matching completion evidence. Reaching the target alone does not send a completion alert |
+| **Reset observed by source** | A third-party source reports a reset on its monitored accounts. The countdown stops, with the observation time and source shown separately from Tibo's confirmation |
+| **Completion confirmed** | Tibo's explicit completion message has been collected. Open the original post to verify it |
 
-明确表示会重置、但没有可计算时间时，可以发送预告提醒，页面不会编造倒计时。后续出现具体计划时，还可能收到更明确的计划提醒。
+A definite reset commitment without a calculable time can trigger an advance notice, but no countdown is invented. A more specific plan posted later may trigger an additional plan alert.
 
-已有重置计划收到对应的完成证据后，首页显示「快去享受 GPT 吧！」，到最早观测或确认时间满 1 小时后恢复日常概览；历史记录仍可查看。
+When completion evidence matches an existing reset plan, the homepage shows “Time to enjoy GPT!” until one hour after the earliest observation or confirmation, then returns to the regular overview. Historical records remain available.
 
-「最近重置时间」优先使用来源提供的实际或观测时间；如果只有完成公告或普通重置公告，则显示公告时间并注明实际时间未知。计划时间不会作为已完成的重置时间。
+“Latest reset time” prefers a source-provided actual or observation time. If only a completion or reset announcement is available, it shows the publication time and labels the actual time as unknown. A planned time is never treated as a completed reset.
 
-来源实测或公开公告均不保证所有账号已经恢复。日历按公告发布日期标记；公告数量也不等于实际完成次数或你的个人可用次数。
+A source observation or public announcement does not guarantee that every account has recovered. Calendar markers use announcement publication dates; announcement counts are not completed-reset totals or your personal available uses.
 
 <details>
-<summary>查看计划、等待确认和完成状态示例</summary>
+<summary>See examples of planned, awaiting and completed states</summary>
 
-以下使用模拟数据，演示页面状态，不代表当前真实事件。
+These examples use synthetic data to illustrate the states, not current events.
 
-**计划公布：** 显示倒计时，计划不计入历史公告统计。
+**Plan announced:** a countdown appears. Plans are excluded from historical announcement counts.
 
-![模拟示例：计划已公布](docs/images/reset-plan-example.png)
+![Synthetic example: plan announced](docs/images/reset-plan-example.png)
 
-**等待确认：** 到达计划时间后继续等待完成证据。
+**Awaiting confirmation:** the target time has passed, and completion evidence is still needed.
 
-![模拟示例：等待完成确认](docs/images/reset-awaiting-example.png)
+![Synthetic example: awaiting completion confirmation](docs/images/reset-awaiting-example.png)
 
-**确认完成：** 来源明确确认后更新状态，并发送单独的完成提醒。
+**Completion confirmed:** an explicit source confirmation updates the status and triggers a separate completion alert.
 
-![模拟示例：来源确认完成](docs/images/reset-completed-example.png)
+![Synthetic example: source confirmed completion](docs/images/reset-completed-example.png)
 
 </details>
 
-## 数据更新与限制
+## Data updates and limitations
 
-云端每分钟检查公开推文和重置完成证据，打开的网页每分钟刷新数据。**上游提供数据后，正常情况下预计约 1–4 分钟显示或推送；这不包含上游自身的收录延迟，也不是送达保证。** 网络、服务状态和手机通知设置也会影响到达时间。
+The cloud checks public posts and reset completion evidence every minute, and an open page refreshes every minute. **Once upstream data is available, display or notification normally takes about 1–4 minutes. This excludes the upstream source's own collection delay and is not a delivery guarantee.** Network conditions, service availability and phone notification settings also affect delivery.
 
-- **推文可能延迟或遗漏。** 这里只展示公开来源已收录的内容，不是完整、实时的 X 时间线；日常推文也不保证第一时间同步。
-- **预测是第三方估计。** 概率来自 AIPlanWatch 的公开评估，不是 Tibo 给出的概率或 OpenAI 的承诺。
-- **完成需要证据。** 上游尚未报告时，页面仍会显示计划或等待确认，不能仅凭倒计时判断实际重置。
-- **服务接受不等于手机已收到。** 「Bark 已接受」表示推送请求已被服务接受，请以手机实际通知为准。
+- **Posts may be delayed or missing.** The website displays content collected by public sources, not a complete, live X timeline. Everyday posts are not guaranteed to appear immediately either.
+- **Forecasts are third-party estimates.** Percentages come from AIPlanWatch's public assessment, not a probability stated by Tibo or a promise from OpenAI.
+- **Completion requires evidence.** Until an upstream source reports it, the page still shows the plan or awaits confirmation. A countdown alone cannot establish that a reset happened.
+- **Service acceptance is not phone receipt.** “Accepted by Bark” means the push service accepted the request. Check your phone to confirm delivery.
 
-主要来源：[Data: codex-reset.com](https://codex-reset.com)（公开推文、[文字归档](https://codex-reset.com/tibo/x)与重置观测）、[AIPlanWatch](https://codex-reset.aiplanwatch.com/)、[tokenusage](https://tokenusage.dev/developers) 和 [follow-builders](https://github.com/zarazhangrui/follow-builders)。原文补全还会使用 X 公开嵌入和 [FxEmbed](https://github.com/FxEmbed/FxEmbed)。网页保留出处链接，方便核对。
+Main sources: [Data: codex-reset.com](https://codex-reset.com) (public posts, [text archive](https://codex-reset.com/tibo/x) and reset observations), [AIPlanWatch](https://codex-reset.aiplanwatch.com/), [tokenusage](https://tokenusage.dev/developers) and [follow-builders](https://github.com/zarazhangrui/follow-builders). Public X embeds and [FxEmbed](https://github.com/FxEmbed/FxEmbed) also help retrieve post text. The website retains source links for verification.
 
-## 可选：自己运行提醒程序
+## Optional: run your own notifier
 
-如果网页订阅名额已满，或希望自己管理提醒程序，可以使用 **[GitHub 自助配置教程](docs/GITHUB_BARK.md)**。它从创建自己的仓库、填写 Bark 密钥，到验证锁屏通知逐步说明，不需要本地安装开发环境。
+If website subscription slots are full, or you prefer to manage the notifier yourself, use the **[GitHub setup guide](docs/GITHUB_BARK.en.md)**. It walks through creating your repository, saving your Bark secret and verifying Lock Screen delivery, without installing a local development environment.
 
-GitHub 版使用本项目的共享公开数据，计划每 10 分钟检查一次，可能因 GitHub 调度而延迟；不占用网页订阅名额，关闭电脑后仍能运行。同一手机建议只使用网页绑定或 GitHub 自助版中的一种，避免两个服务各发一份。
+The GitHub version reads this project's shared public data and is scheduled to check every 10 minutes, with possible GitHub scheduling delays. It does not use a website subscription slot and runs with your computer shut down. Use either website binding or the GitHub notifier for the same phone to avoid receiving a copy from both services.
 
 <details>
-<summary>开发者：本地运行与部署</summary>
+<summary>Developers: local setup and deployment</summary>
 
-网页基于 Vue 3 / uni-app，云端使用 Cloudflare Workers 和 Bark。需要 Node.js 24+：
+The website uses Vue 3 / uni-app, with Cloudflare Workers and Bark in the cloud. Node.js 24+ is required:
 
 ```sh
 npm ci
@@ -133,23 +133,23 @@ npm test
 npm run build
 ```
 
-网页输出在 `dist/build/h5/`。本地开发先运行 `npm run server`，另开终端运行 `npm run dev`。
+Web output is in `dist/build/h5/`. For local development, run `npm run server`, then `npm run dev` in another terminal.
 
-自行部署 Worker 时，复制 `web/wrangler.example.jsonc` 为 `web/wrangler.jsonc`，填写自己的 KV / D1 标识，应用 `web/migrations/` 并单独配置生产密钥。详细说明：
+To deploy your own Worker, copy `web/wrangler.example.jsonc` to `web/wrangler.jsonc`, configure your own KV / D1 resources, apply `web/migrations/` and set production secrets separately. See:
 
-- [数据采集、通知流程与验证](docs/MINUTE_DISCOVERY.md)
-- [可选 Cloudflare Queues 配置](docs/CLOUDFLARE_QUEUES.md)
+- [Data collection, notification flow and verification](docs/MINUTE_DISCOVERY.en.md)
+- [Optional Cloudflare Queues configuration](docs/CLOUDFLARE_QUEUES.en.md)
 
-| 目录 | 用途 |
+| Directory | Purpose |
 |---|---|
-| `src/` | 网页、中英文和手机布局 |
-| `web/` | 公开数据 API、Bark 订阅和发送服务 |
-| `scripts/github-notifier.mjs` | 个人 GitHub Bark 提醒程序 |
-| `backend/` | 来源采集与本地开发服务 |
-| `tests/` | 数据、时间、阈值、去重与推送测试 |
+| `src/` | Website, localization and mobile layouts |
+| `web/` | Public API, Bark subscriptions and delivery service |
+| `scripts/github-notifier.mjs` | Personal GitHub Bark notifier |
+| `backend/` | Source collection and local development service |
+| `tests/` | Data, timing, thresholds, deduplication and notification checks |
 
 </details>
 
-## 开源与致谢
+## License and acknowledgments
 
-使用 Vue、uni-app、Cheerio、Lucide 和 Radix Colors，相关许可见 [licenses/](licenses/)。项目自有代码采用 [MIT 许可](LICENSE)，上游内容遵循各自许可。感谢数据来源与 Bark 开源项目；本项目与这些服务的运营方无隶属关系。
+Built with Vue, uni-app, Cheerio, Lucide and Radix Colors; see [licenses/](licenses/) for their terms. Original project code uses the [MIT License](LICENSE); upstream content retains its own terms. Thanks to the data providers and the Bark open-source project. This project is unaffiliated with their operators.

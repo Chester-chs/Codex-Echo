@@ -1,6 +1,6 @@
 # Connect Bark on iPhone for Codex alerts with the website closed
 
-[简体中文](BARK_SETUP.md) | **English** · [Back to README](../README.en.md)
+[简体中文](BARK_SETUP.md) | **English** · [Back to README](../README.md)
 
 **Bark cloud alerts are recommended.** You only need your phone and a browser; no GitHub configuration or purchased server/domain.
 

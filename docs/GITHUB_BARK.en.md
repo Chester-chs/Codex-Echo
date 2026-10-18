@@ -1,6 +1,6 @@
 # Codex Echo: set up your own Bark notifications
 
-[简体中文](GITHUB_BARK.md) | **English** · [Back to README](../README.en.md)
+[简体中文](GITHUB_BARK.md) | **English** · [Back to README](../README.md)
 
 This guide assumes no GitHub experience. GitHub will check Codex reset announcements and source forecasts, then notify your own iPhone. **Bark is the only phone push service. Your computer and the website can be closed.**
 

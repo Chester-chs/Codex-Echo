@@ -1,6 +1,6 @@
 # iPhone 接入 Bark：关闭网页后也能收到 Codex 提醒
 
-**简体中文** | [English](BARK_SETUP.en.md) · [返回首页](../README.md)
+**简体中文** | [English](BARK_SETUP.en.md) · [返回首页](../README.zh-CN.md)
 
 推荐使用 **Bark 云端提醒**。只需手机和浏览器，不需要配置 GitHub、购买服务器或域名。
 

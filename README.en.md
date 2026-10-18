@@ -1,6 +1,6 @@
 # Codex Echo · Codex 回响
 
-[简体中文](README.md) | **English**
+**English** | [简体中文](README.zh-CN.md)
 
 See **the latest Codex reset announcement, upcoming plans, a history calendar and collected Tibo posts** on one page. Connect **Bark** for iPhone Lock Screen alerts. The website supports Chinese and English, with no account required to browse.
 
