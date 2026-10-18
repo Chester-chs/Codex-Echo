@@ -2,7 +2,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-See **the latest Codex reset announcement, upcoming plans, a history calendar and collected Tibo posts** on one page. Connect **Bark** for iPhone Lock Screen alerts. The website supports Chinese and English, with no account required to browse.
+See **the latest Codex reset announcement, upcoming plans, a history calendar and collected Tibo posts** on one page. Connect **Bark** for iPhone Lock Screen alerts. First visits default to English; use the header to switch languages or timezones. Your selections are remembered in this browser. No account is required to browse.
 
 **[Open the website](https://echo-radar.pages.dev/) · [Set up iPhone alerts](docs/BARK_SETUP.en.md)**
 

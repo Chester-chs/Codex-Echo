@@ -162,6 +162,23 @@ test("timezone conversion handles date rollover and London daylight saving", () 
   );
   assert.equal(formatTime(null, "zh", "UTC"), "—");
 });
+test("new website visitors use English without changing subscription defaults", () => {
+  for (const input of [undefined, null, {}, { language: "fr" }, { zone: "UTC" }]) {
+    assert.equal(sanitizeSettings(input, "en").language, "en");
+  }
+  assert.equal(sanitizeSettings().language, "zh");
+});
+
+test("saved language and timezone survive reopening with an English website default", () => {
+  for (const language of ["zh", "en"]) {
+    for (const zone of ["Europe/London", "Asia/Shanghai", "UTC"]) {
+      const restored = sanitizeSettings(JSON.parse(JSON.stringify({ language, zone })), "en");
+      assert.equal(restored.language, language);
+      assert.equal(restored.zone, zone);
+    }
+  }
+});
+
 test("stored settings cannot select an unsupported locale or invalid threshold", () => {
   assert.deepEqual(
     sanitizeSettings({

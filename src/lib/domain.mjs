@@ -169,10 +169,12 @@ export function formatTime(value, language = "zh", zone = "Europe/London") {
   }
 }
 
-export function sanitizeSettings(input = {}) {
+export function sanitizeSettings(input = {}, defaultLanguage = "zh") {
   const value = input && typeof input === "object" ? input : {};
   return {
-    language: value.language === "en" ? "en" : "zh",
+    language: ["en", "zh"].includes(value.language)
+      ? value.language
+      : defaultLanguage === "en" ? "en" : "zh",
     zone: ["Europe/London", "Asia/Shanghai", "UTC"].includes(value.zone)
       ? value.zone
       : "Europe/London",

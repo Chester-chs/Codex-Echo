@@ -871,7 +871,7 @@ topInset = uni.getWindowInfo
 try {
   stored = uni.getStorageSync("pulse:settings") || {};
 } catch {}
-const settings = reactive(sanitizeSettings(stored));
+const settings = reactive(sanitizeSettings(stored, isWeixin ? "zh" : "en"));
 const tab = ref("radar"),
   filter = ref("all"),
   query = ref("");

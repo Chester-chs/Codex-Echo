@@ -2,7 +2,7 @@
 
 [English](README.md) | **简体中文**
 
-在一页查看 **Codex 最近一次重置公告、重置计划、历史日历和 Tibo 推文**，也可以用 **Bark** 接收 iPhone 锁屏提醒。支持中文和英文，无需注册即可浏览。
+在一页查看 **Codex 最近一次重置公告、重置计划、历史日历和 Tibo 推文**，也可以用 **Bark** 接收 iPhone 锁屏提醒。首次打开默认英文，可在页首切换语言和时区；同一浏览器会记住上次选择。无需注册即可浏览。
 
 **[打开网页](https://echo-radar.pages.dev/) · [iPhone 提醒设置教程](docs/BARK_SETUP.md)**
 
