@@ -1,4 +1,4 @@
-# Codex Echo · Codex 回响
+# Codex Echo 
 
 **English** | [简体中文](README.zh-CN.md)
 
