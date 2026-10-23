@@ -22,6 +22,44 @@ async function setup({count=1,baseline=true,queue=false}={}){const db=database()
 function source(payload,latest=null){const calls=[];const fetcher=async url=>{calls.push(url);if(url.endsWith('/api/feed'))return Response.json(payload);if(url.endsWith('/api/forecast'))return Response.json({latest_alert:latest});if(url.endsWith('/tibo/x'))return new Response('<html>Archive temporarily unavailable</html>');return new Response('missing',{status:503});};return {fetcher,calls};}
 const log=()=>{};
 
+test('PST parser upgrades do not resend an unchanged plan already sent or possibly delivered',async()=>{
+ for(const queue of [false,true])for(const state of ['sent','unknown','sending'])for(const tail of ['', ' More details.'.repeat(110)]){
+  const e=await setup({queue}),now=Date.parse('2026-10-23T09:00:00Z'),p=record('Global reset tomorrow at 10am PST.'+tail,'2113492502355562875',Date.parse('2026-10-23T05:00:00Z'));
+  const recipient=e.NOTIFY_DB.sql.prepare('SELECT device_hash FROM bark_subscriptions').get().device_hash;
+  const old={id:p.id,original:p.text,postedAt:p.at,category:'schedule',scheduledAt:'2026-10-23T17:00:00.000Z',kind:'tweet',tweetClass:'plan'};
+  e.NOTIFY_DB.sql.prepare("INSERT INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) VALUES(?,?,'alert',?,?,?,?,?)").run(recipient,`reset:${p.id}:plan:${old.scheduledAt}`,JSON.stringify(old),state,now-60000,now-60000,now-60000);
+  e.NOTIFY_DB.sql.prepare('INSERT INTO bark_meta VALUES(?,?)').run('tibo-posts:seen:'+p.id,String(now-60000));
+  let sends=0;const send=async()=>{sends++;return {state:'sent'};};
+  await worker.scheduled({cron:'* * * * *'},e,{}, {now,...source(feed([p],[],now)),send});
+  if(queue){const rows=e.NOTIFY_DB.sql.prepare("SELECT recipient,event_key FROM bark_events WHERE state IN('pending','retry')").all();await consumeBarkBatch({messages:rows.map(r=>({body:{recipient:r.recipient,eventKey:r.event_key},ack(){},retry(){}}))},e,{now,send});}
+  assert.equal(sends,0,'Parser-only time correction must not resend the same plan');
+ }
+});
+
+test('a previously unclassified before-deadline reply is recovered once without changing subscribers',async()=>{
+ const e=await setup(),now=Date.parse('2026-10-23T09:00:00Z');
+ const parent=record('Day 18/ Decisions API is GA. But yes… that’s a reset!','2113492187770175603',Date.parse('2026-10-23T04:46:19Z'),{kind:'candidate'});
+ const child=record('Landing tomorrow before 10am PST together with a small ship.','2113492502355562875',Date.parse('2026-10-23T04:47:34Z'),{kind:'candidate',is_reply:true,replying_to:'thsottiaux',in_reply_to_tweet_id:parent.id});
+ const before=e.NOTIFY_DB.sql.prepare('SELECT * FROM bark_subscriptions').all();
+ for(const p of [parent,child])e.NOTIFY_DB.sql.prepare('INSERT INTO bark_meta VALUES(?,?)').run('tibo-posts:seen:'+p.id,String(now-60000));
+ const sent=[],upstream=source(feed([child,parent],[],now)),send=async job=>{sent.push(job);return {state:'sent',code:'provider_accepted'};};
+ await worker.scheduled({cron:'* * * * *'},e,{}, {now,...upstream,send});
+ assert.equal(sent.length,1);assert.equal(sent[0].event.scheduledAt,'2026-10-23T18:00:00.000Z');
+ await worker.scheduled({cron:'* * * * *'},e,{}, {now:now+60000,...upstream,send});
+ assert.equal(sent.length,1);
+ const after=e.NOTIFY_DB.sql.prepare('SELECT * FROM bark_subscriptions').all();
+ for(let i=0;i<before.length;i++)for(const field of ['device_hash','device_cipher','token_hash','reset_alerts','forecast_alerts','threshold','language'])assert.equal(after[i][field],before[i][field]);
+});
+
+test('full-text digests preserve a genuine schedule edit after the notification excerpt',async()=>{
+ const e=await setup(),now=Date.parse('2026-10-23T09:00:00Z'),intro='Some release details. '.repeat(60),oldText=intro+'Global reset tomorrow at 9am PST.',newText=intro+'Global reset tomorrow at 10am PST.';
+ const p=record(newText,'2113492502355562875',Date.parse('2026-10-23T05:00:00Z')),recipient=e.NOTIFY_DB.sql.prepare('SELECT device_hash FROM bark_subscriptions').get().device_hash;
+ const old={id:p.id,original:oldText.slice(0,1000),sourceTextDigest:await digest(oldText),postedAt:p.at,category:'schedule',scheduledAt:'2026-10-23T17:00:00.000Z'};
+ e.NOTIFY_DB.sql.prepare("INSERT INTO bark_events(recipient,event_key,kind,payload,state,available,created,updated) VALUES(?,?,'reset',?,'sent',?,?,?)").run(recipient,`reset:${p.id}:plan:${old.scheduledAt}`,JSON.stringify(old),now-60000,now-60000,now-60000);
+ const sent=[];await worker.scheduled({cron:'* * * * *'},e,{}, {now,...source(feed([p],[],now)),send:async job=>{sent.push(job);return {state:'sent'};}});
+ assert.equal(sent.length,1);assert.equal(sent[0].event.sourceTextDigest,await digest(newText));
+});
+
 test('fresh completion evidence with old publication time reaches newer subscribers and upgrades the page',async()=>{
  const e=await setup(),p=record('We will reset in 12 hours.','2111492738025959922',NOW-8*3600000),sent=[];
  const observed={id:p.id,url:p.url,kind:'reset',state:'confirmed',source_at:p.at,confirmation_source:'operator_observed',observed_at:iso(NOW-1000),summary:'Observed'};

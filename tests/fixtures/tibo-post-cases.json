@@ -22,7 +22,7 @@
     "expected": {
       "kind": "plan",
       "scope": "automatic",
-      "scheduledAt": "2026-10-13T06:59:00.000Z",
+      "scheduledAt": "2026-10-13T07:59:00.000Z",
       "approximate": true
     },
     "reply": {
@@ -63,7 +63,7 @@
     "expected": {
       "kind": "plan",
       "scope": "banked",
-      "scheduledAt": "2026-10-08T06:59:00.000Z",
+      "scheduledAt": "2026-10-08T07:59:00.000Z",
       "approximate": true
     }
   },
@@ -73,7 +73,7 @@
     "expected": {
       "kind": "plan",
       "scope": "automatic",
-      "scheduledAt": "2026-10-02T17:00:00.000Z",
+      "scheduledAt": "2026-10-02T18:00:00.000Z",
       "approximate": false
     }
   },
@@ -83,7 +83,7 @@
     "expected": {
       "kind": "plan",
       "scope": "automatic",
-      "scheduledAt": "2026-08-31T01:00:00.000Z",
+      "scheduledAt": "2026-08-31T02:00:00.000Z",
       "approximate": false
     }
   },

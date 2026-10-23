@@ -1,4 +1,6 @@
 export const archivedTranslations = {
+  "Landing tomorrow before 10am PST together with a small ship.": "重置将在明天上午 10 点 PST（太平洋标准时间）之前到来，同时还会有一项小更新。",
+  "Lands tomorrow before 10am PST.": "重置将在明天上午 10 点 PST（太平洋标准时间）之前到来。",
   "Done and dusted https://t.co/0fehr43VS4": "大功告成，重置已经完成。 https://t.co/0fehr43VS4",
   "Global reset by EOD. May the tokens do good things for you.": "当天结束前将进行全局重置。愿这些额度帮助你做出好东西。",
   "We shipped four things that were deemed good to great and some math proofs, but the vote is clear and the community demands a reset. I did calibrate it and it *seems* that the game is rigged in reset's favor, but such are the rules at the moment.\n\nTherefore ... the reset has been processed. Enjoy!": "我们发布了四件被认为从优秀到优秀的东西以及一些数学证明，但投票结果很明确，社区要求重新设置。我确实校准了它，并且“似乎”游戏被操纵以利于重置，但这就是目前的规则。\n\n因此...重置已处理。享受！",

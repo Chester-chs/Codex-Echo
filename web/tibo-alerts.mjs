@@ -4,6 +4,7 @@ import {classifyTiboPost,tiboReplyContext,resetNoticeKey,annotateResetPlan,norma
 import {archivedTranslations} from '../src/lib/translations-zh.mjs';
 import {readProvider} from './provider-budget.mjs';
 import {translatePublicText} from '../backend/translate.mjs';
+import {digest} from './bark.mjs';
 const iso=n=>new Date(n).toISOString(),FENCE='tibo-posts:baseline:v1',CONTEXT='tibo-posts:context:v1';
 export async function tiboContext(db,state,now=Date.now()){
  const rows=(await db.prepare("SELECT name,value FROM bark_meta WHERE name IN(?, 'codex-reset:confirmation:v1')").bind(CONTEXT).all()).results;
@@ -41,6 +42,7 @@ export async function discoverTiboPosts(env,{now=Date.now(),fetcher=fetch,transl
    }
    const record=annotateResetPlan({...post,parent:reply.selfReply&&parent?{id:parent.id,original:parent.original.slice(0,1000),translation:parent.translation||'',resetType:parent.resetType}:undefined});
    const event={...record,original:post.original.slice(0,2000),state:classification.kind==='completed'?'confirmed':classification.kind,tweetClass:classification.kind,sourceAt:post.postedAt,...classification,kind:'tweet',threadId:post.conversationId||parent?.id||post.id};
+   if(classification.kind==='plan')event.sourceTextDigest=await digest(post.original);
    if(classification.kind==='completed')event.resetPlanId=completionPlanId(record,relatedRecords,now);
    const key=classification.kind==='plan'?resetNoticeKey(record):`alert:tweet:${post.id}:${classification.kind}`;
    events.push({key,event,posted:at});

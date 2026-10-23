@@ -3,8 +3,37 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import * as api from '../src/lib/reset-plan.mjs';
 import {formatBark} from '../web/bark.mjs';
+import {formatTime,normalizeFeed} from '../src/lib/domain.mjs';
 const cases=JSON.parse(readFileSync(new URL('./fixtures/tibo-post-cases.json',import.meta.url)));
 const post=(original,postedAt='2026-10-17T12:00:00Z',extra={})=>({id:'2117536046041595904',url:'https://x.com/thsottiaux/status/2117536046041595904',original,postedAt,textStatus:'mirror',category:'post',...extra});
+test('real October 23 self-reply preserves tomorrow, before and explicit PST through page and Bark',()=>{
+ const parent=post('Day 18/ Decisions API is GA. But yes… that’s a reset!','2026-10-23T04:46:19Z');
+ const row=post('Landing tomorrow before 10am PST together with a small ship.','2026-10-23T04:47:34Z',{id:'2113492502355562875',url:'https://x.com/thsottiaux/status/2113492502355562875',isReply:true,replyingTo:'thsottiaux',parent});
+ const now=Date.parse('2026-10-23T09:00:00Z'),directive=api.interpretResetDirective(row);
+ assert.equal(directive?.scheduledAt,'2026-10-23T18:00:00.000Z');
+ assert.equal(directive?.before,true);
+ const normalized=normalizeFeed({resets:[],posts:[row]},now).posts;
+ const plan=api.getResetPlanState(normalized,now);
+ assert.equal(plan.phase,'scheduled');assert.equal(plan.before,true);
+ assert.equal(formatTime(plan.scheduledAt,'en','Europe/London'),'2026/10/23 19:00');
+ assert.equal(formatTime(plan.scheduledAt,'zh','Asia/Shanghai'),'2026/10/24 02:00');
+ for(const language of ['en','zh']){
+  const alert=formatBark({kind:'alert',event:{...row,...directive,kind:'tweet',tweetClass:'plan'}},{language});
+  assert.match(alert.body,/2026\/10\/23 19:00/);assert.match(alert.body,/2026\/10\/24 02:00/);
+  assert.match(alert.body,language==='en'?/Before/:/截止时间之前/);
+ }
+});
+test('Lands self-replies and day-qualified deadlines are recognized without accepting unrelated replies',()=>{
+ const parent=post('Today is reset day.');
+ for(const original of ['Lands tomorrow before 10am PST.','Landing tomorrow by 10am PST.']){
+  const row=post(original,'2026-10-22T06:55:54Z',{isReply:true,replyingTo:'thsottiaux'});
+  assert.equal(api.classifyTiboPost(row,{parent})?.scheduledAt,'2026-10-22T18:00:00.000Z');
+  assert.equal(api.classifyTiboPost({...row,replyingTo:'someone_else'},{parent}),null);
+  assert.equal(api.classifyTiboPost(row,{parent:post('A feature launch.')}),null);
+ }
+ assert.equal(api.classifyTiboPost(post('Global reset tomorrow before 10am PST.','2026-10-23T20:00:00Z'))?.scheduledAt,'2026-10-24T18:00:00.000Z');
+ for(const [zone,target] of [['PST','2026-10-23T18:00:00.000Z'],['PDT','2026-10-23T17:00:00.000Z'],['PT','2026-10-23T17:00:00.000Z'],['UTC','2026-10-23T10:00:00.000Z']])assert.equal(api.classifyTiboPost(post(`Global reset today before 10am ${zone}.`,'2026-10-23T09:00:00Z'))?.scheduledAt,target);
+});
 for(const [i,sample] of cases.entries())test(`Tibo example ${i+1}: ${sample.text.slice(0,65)}`,()=>{
  assert.equal(typeof api.classifyTiboPost,'function');const {parent,...reply}=sample.reply||{};assert.deepEqual(api.classifyTiboPost(post(sample.text,sample.at,reply),{parent}),sample.expected);
 });

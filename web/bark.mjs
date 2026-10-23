@@ -40,7 +40,7 @@ export function formatBark(job,{language='zh'}={}) {
   const parent=e.parent?.original?'\n\n'+(zh?'父帖原话':'Parent post')+'\n'+clip(e.parent.original,1000)+(zh?'\n'+clip(chineseText(e.parent.original,e.parent.translation),1000):''):'';
   if(e.tweetClass==='plan'){
    title=zh?'Codex 回响 · 已公布重置计划':'Codex Echo · Planned reset announced';
-   body=(zh?(e.approximate?'最晚约':'计划重置时间'):(e.approximate?'By about':'Planned reset time'))+'\n'+bothTimes(e.scheduledAt,zh)+'\n\n'+(zh?'这是来源公布的计划，不代表已经完成；到点后仍等待完成确认。':'An announced plan, not a completed reset. Completion still needs confirmation.');
+   body=(zh?(e.before?'截止时间之前':e.approximate?'最晚约':'计划重置时间'):(e.before?'Before':e.approximate?'By about':'Planned reset time'))+'\n'+bothTimes(e.scheduledAt,zh)+'\n\n'+(zh?'这是来源公布的计划，不代表已经完成；到点后仍等待完成确认。':'An announced plan, not a completed reset. Completion still needs confirmation.');
   }else if(e.tweetClass==='commitment'){
    title=zh?'Codex 回响 · ⚠️ Tibo 预告重置':'Codex Echo · ⚠️ Tibo announced a reset';
    body=zh?'这是预告，不代表已完成。':'A reset announcement, not a completed reset.';
@@ -59,7 +59,7 @@ export function formatBark(job,{language='zh'}={}) {
   const plan=interpretResetDirective(e)||(e.category==='schedule'&&Number.isFinite(Date.parse(e.scheduledAt))?{kind:'scheduled',scheduledAt:e.scheduledAt}:null);
   if(plan?.kind==='scheduled'){
    title=zh?'Codex 回响 · 已公布重置计划':'Codex Echo · Planned reset announced';
-   body=zh?`${plan.approximate?'最晚约':'计划重置时间'}\n${bothTimes(plan.scheduledAt,true)}\n\n来源原话（中文译文）\n${clip(chineseText(e.original,e.translation))}\n\n这是来源公布的计划，不代表已经完成；到点后仍等待完成确认，也不保证你的个人账号额度恢复。\n\n公告发布于\n${bothTimes(e.postedAt,true)}`:`${plan.approximate?'By about':'Planned reset time'}\n${bothTimes(plan.scheduledAt,false)}\n\nOriginal announcement\n${clip(e.original)}\n\nAn announced plan, not a completed reset. Completion still needs confirmation after the target time; personal account availability is not guaranteed.\n\nAnnounced\n${bothTimes(e.postedAt,false)}`;
+   body=zh?`${plan.before?'截止时间之前':plan.approximate?'最晚约':'计划重置时间'}\n${bothTimes(plan.scheduledAt,true)}\n\n来源原话（中文译文）\n${clip(chineseText(e.original,e.translation))}\n\n这是来源公布的计划，不代表已经完成；到点后仍等待完成确认，也不保证你的个人账号额度恢复。\n\n公告发布于\n${bothTimes(e.postedAt,true)}`:`${plan.before?'Before':plan.approximate?'By about':'Planned reset time'}\n${bothTimes(plan.scheduledAt,false)}\n\nOriginal announcement\n${clip(e.original)}\n\nAn announced plan, not a completed reset. Completion still needs confirmation after the target time; personal account availability is not guaranteed.\n\nAnnounced\n${bothTimes(e.postedAt,false)}`;
    if(e.textSource?.startsWith('https://codex-reset.com/'))body+='\n\nData: codex-reset.com';
    url.hash='/pages/index/index?record='+encodeURIComponent(e.id);
    return {title,body,group:zh?'Codex 回响':'Codex Echo',url:url.href,icon:SITE+'static/pulse.png',sound:'bell',level:'active'};

@@ -691,7 +691,7 @@
                     ? time(focusedRecord.resetAt)
                     : t("notStated")
                 }}</text></view
-              ><view v-if="focusedRecord.scheduledAt"><text>{{ focusedRecord.approximate?(settings.language==='zh'?'最晚约（待确认完成）':'By about (completion unconfirmed)'):(settings.language==='zh'?'计划重置时间（待确认完成）':'Planned reset time (completion unconfirmed)') }}</text><text>{{ time(focusedRecord.scheduledAt) }}</text></view><view
+              ><view v-if="focusedRecord.scheduledAt"><text>{{ focusedRecord.before?(settings.language==='zh'?'截止时间之前（待确认完成）':'Before (completion unconfirmed)'):focusedRecord.approximate?(settings.language==='zh'?'最晚约（待确认完成）':'By about (completion unconfirmed)'):(settings.language==='zh'?'计划重置时间（待确认完成）':'Planned reset time (completion unconfirmed)') }}</text><text>{{ time(focusedRecord.scheduledAt) }}</text></view><view
                 ><text>{{ t("published") }}</text
                 ><text>{{ time(focusedRecord.postedAt) }}</text></view
               ><view

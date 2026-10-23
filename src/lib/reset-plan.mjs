@@ -73,9 +73,9 @@ export function classifyTiboPost(post,{parent,providerKind=post?.providerKind,ex
  for(const sentence of sentences){
   if(unsure.test(sentence)||/\b(?:database|password|device|router|phone|computer|server|or|discuss|reports|button|lost)\b/i.test(sentence))continue;
   if(/^(?:done and dusted|it['’]s done|it is done|(?:the )?(?:codex |banked )?resets? (?:is |has been |was )?(?:complete(?:d)?|done|finished)|we have completed (?:the |banked )?reset|resets? (?:all )?propagated|all propagated|reset has been propagated|all reset for everyone|confirmed landed across all accounts|put the reset in the bag|(?:codex )?重置已完成|已完成(?:codex )?重置)$/i.test(sentence)){completed=true;continue;}
-  const intent=related&&(/\breset(?:s|ting)?\b|\breseting\b/i.test(sentence)||reply.selfReply&&/^(?:landing|will (?:land|be there))/i.test(sentence))&&!/\bcomplete(?:d)?\b/i.test(sentence);
+  const intent=related&&(/\breset(?:s|ting)?\b|\breseting\b/i.test(sentence)||reply.selfReply&&/^(?:lands?\b|landing\b|will (?:land|be there))/i.test(sentence))&&!/\bcomplete(?:d)?\b/i.test(sentence);
   if(!intent)continue;
-  let target=null,approximate=false;
+  let target=null,approximate=false,before=false;
   const absolute=sentence.match(/\b(?:on|at|for)\s+(20\d{2})-(\d{2})-(\d{2})(?:T|\s+(?:at\s+)?)(\d{2}):(\d{2})(?::(\d{2}))?\s*(UTC|GMT|Z)$/i);
   const relative=sentence.match(/\b(?:within(?: the next)?|in(?: the next)?)\s+(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?|m)(?:\s*(?:,\s*|and\s+|\s+)(\d+(?:\.\d+)?)\s*(minutes?|mins?|m))?$/i);
   if(absolute){
@@ -85,15 +85,26 @@ export function classifyTiboPost(post,{parent,providerKind=post?.providerKind,ex
    if(relative[3]&&!/^h/i.test(relative[2]))continue;
    target=posted+Number(relative[1])*(/^h/i.test(relative[2])?HOUR:60000)+Number(relative[3]||0)*60000;approximate=true;
   }else{
-   const zone=/\b(?:UTC|GMT)\b/i.test(sentence)?'UTC':'America/Los_Angeles';
+   const zone=/\b(?:UTC|GMT)\b/i.test(sentence)?'UTC':/\bPST\b/i.test(sentence)?'Etc/GMT+8':/\bPDT\b/i.test(sentence)?'Etc/GMT+7':'America/Los_Angeles';
    if(/\bby (?:EOD|end of (?:the )?day)\b/i.test(sentence)){
     const date=localParts(posted,zone);target=localInstant(date,23,59,zone);if(target<=posted)target=localInstant(moveDate(date,1),23,59,zone);approximate=true;
    }else{
-    const clock=sentence.match(/\b(?:(today|tomorrow)\s+(?:at\s+)?|(?:will land |landing |will be there )?(at|by)\s+)(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b(?:\s+(?:PST|PDT|PT|UTC|GMT))?/i);
-    if(clock){const date=localParts(posted,zone),hour=Number(clock[3]),minute=Number(clock[4]||0);if(hour>=1&&hour<=12&&minute<60){const h=hour%12+(clock[5].toLowerCase()==='pm'?12:0),days=clock[1]?.toLowerCase()==='tomorrow'?1:0;target=localInstant(moveDate(date,days),h,minute,zone);if(target<=posted&&!clock[1])target=localInstant(moveDate(date,1),h,minute,zone);approximate=clock[2]?.toLowerCase()==='by';}}
+    // Keep day and deadline together: matching only "before 10am" loses "tomorrow".
+    const clock=sentence.match(/\b(?:(today|tomorrow)\s+(?:(at|by|before)\s+)?|(at|by|before)\s+)(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b(?:\s+(PST|PDT|PT|UTC|GMT))?/i);
+    if(clock){
+     // Explicit PST/PDT are fixed offsets; PT follows Los Angeles daylight saving.
+     const namedZone=clock[7]?.toUpperCase(),clockZone=namedZone==='PST'?'Etc/GMT+8':namedZone==='PDT'?'Etc/GMT+7':namedZone==='UTC'||namedZone==='GMT'?'UTC':zone;
+     const date=localParts(posted,clockZone),hour=Number(clock[4]),minute=Number(clock[5]||0);
+     if(hour>=1&&hour<=12&&minute<60){
+      const h=hour%12+(clock[6].toLowerCase()==='pm'?12:0),days=clock[1]?.toLowerCase()==='tomorrow'?1:0;
+      target=localInstant(moveDate(date,days),h,minute,clockZone);
+      if(target<=posted&&!clock[1])target=localInstant(moveDate(date,1),h,minute,clockZone);
+      before=(clock[2]||clock[3])?.toLowerCase()==='before';approximate=before||(clock[2]||clock[3])?.toLowerCase()==='by';
+     }
+    }
    }
   }
-  if(Number.isFinite(target)&&target>posted&&target-posted<=7*DAY){plans.push({kind:'plan',scheduledAt:new Date(target).toISOString(),approximate,scope});continue;}
+  if(Number.isFinite(target)&&target>posted&&target-posted<=7*DAY){plans.push({kind:'plan',scheduledAt:new Date(target).toISOString(),approximate,scope,...(before?{before:true}:{})});continue;}
   if(sentences.length===1&&/^(?:day \d+\s*\/\s*)?reset$/i.test(sentence)||/\bglobal reset (?:landing|by)\b|\bwe['’]ll reset (?:usage )?limits\b|\bwe (?:will reset|are reset(?:t)?ing)\b|\breset will (?:land|be there)\b/i.test(sentence)||((providerKind==='signal'||explicitResetClaim===true)&&/\breset(?:s|ting)?\b/i.test(sentence)&&!/\b(?:complete|propagated|cancelled|canceled|delayed|postponed)\b/i.test(sentence)))commitment=true;
  }
  if(completed)return plans.length?null:{kind:'completed',scope};
@@ -114,7 +125,7 @@ export function annotateResetPlan(record) {
  if(!record||typeof record!=='object')return record;
  if(record.visibilityOnly)return {...record,category:'post',resetType:'unknown',resetTypes:[],resetAt:null,scheduledAt:null};
  const directive=interpretResetDirective(record);
- if(directive?.kind==='scheduled')return {...record,category:'schedule',scheduledAt:directive.scheduledAt,approximate:directive.approximate===true,resetAt:null,resetType:directive.scope,resetTypes:[directive.scope]};
+ if(directive?.kind==='scheduled')return {...record,category:'schedule',scheduledAt:directive.scheduledAt,approximate:directive.approximate===true,before:directive.before===true,resetAt:null,resetType:directive.scope,resetTypes:[directive.scope]};
  if(directive?.kind==='cancelled')return {...record,category:'post',scheduledAt:null,resetAt:null};
  if(directive?.kind==='completed')return {...record,category:'reset',completionNotice:true,scheduledAt:null,resetType:directive.scope,resetTypes:[...new Set([...(Array.isArray(record.resetTypes)?record.resetTypes:[]).filter(t=>['automatic','banked'].includes(t)),directive.scope])]};
  if(record.category==='schedule')return {...record,category:directive?.kind==='completed'?'reset':'post',scheduledAt:null};
@@ -168,7 +179,7 @@ export function getResetPlanState(records=[],now=Date.now(),providerConfirmation
  const completedAt=success&&completionTimes.length?Math.min(...completionTimes):null;
  // Expire only the presentation; retain terminal state for plan suppression and history.
  const showCard=!success||(completedAt!==null&&now-completedAt<3600000);
- return {record:plan.record,scheduledAt:plan.directive.scheduledAt,approximate:plan.directive.approximate===true,phase,remainingMs:phase==='scheduled'?Math.max(0,target-now):0,completedAt,showCard,confirmation:confirmation?.record||null,observation};
+ return {record:plan.record,scheduledAt:plan.directive.scheduledAt,approximate:plan.directive.approximate===true,before:plan.directive.before===true,phase,remainingMs:phase==='scheduled'?Math.max(0,target-now):0,completedAt,showCard,confirmation:confirmation?.record||null,observation};
 }
 
 export function isCurrentPlanNotice(record,records,now,providerConfirmation=null) {
