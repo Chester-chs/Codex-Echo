@@ -1,97 +1,43 @@
-# Connect Bark on iPhone for Codex alerts with the website closed
+# Connect Bark on iPhone
 
-[简体中文](BARK_SETUP.md) | **English** · [Back to README](../README.md)
+**English** | [简体中文](BARK_SETUP.md) · [README](../README.md)
 
-**Bark cloud alerts are recommended.** You only need your phone and a browser; no GitHub configuration or purchased server/domain.
+Use this route for the simplest setup. No GitHub account or server is needed.
 
-| Mode | With the website closed | Requirement |
-|---|---|---|
-| **Bark cloud alerts (recommended)** | The cloud can still send to your iPhone, including its Lock Screen | Install Bark, connect your own address, allow phone notifications |
-| Page notifications | **Stop** | Keep the page open and running; backgrounding or locking may suspend it |
+## 1. Prepare Bark
 
-Enabling page notifications does not connect Bark. The two sets of preferences are independent.
+Install Bark using the App Store link in its [official project](https://github.com/Finb/Bark), open it, and allow notifications. In **iPhone Settings → Notifications → Bark**, enable **Lock Screen**.
 
-## 1. Install Bark and allow Lock Screen notifications
+Copy your push address from Bark. It looks like `https://api.day.app/YOUR_DEVICE_KEY`; use your real address, not this example. Only the default `api.day.app` service is supported. Keep the address private.
 
-1. Find **Bark** in the App Store. Use the App Store link in the [official Bark project](https://github.com/Finb/Bark) to identify it.
-2. Install and open it. Allow notifications when prompted.
-3. In iPhone **Settings → Notifications → Bark**, enable **Allow Notifications** and **Lock Screen**. Some versions also offer **Settings → Apps → Bark → Notifications**.
-4. For the test, check that Focus does not silence Bark and Scheduled Summary does not delay it.
+## 2. Connect and save
 
-**Checkpoint:** Bark is installed and can show Lock Screen notifications.
+Open [Codex Echo](https://echo-radar.pages.dev/). Below the Tibo post list, expand **Phone alerts from the cloud**:
 
-## 2. Copy your own push address
+1. Paste your Bark address.
+2. Choose **Reset announcements** and/or **Source forecasts**.
+3. Set the forecast threshold (40%–90%) and notification language.
+4. Select **Connect and save** and wait for the connected status.
 
-Copy the address displayed inside Bark. Its format is:
+The threshold applies only to forecasts. A recognized reset plan and matching completion evidence generate separate alerts; repeated confirmations are deduplicated. Initial connection does not replay old messages.
 
-```text
-https://api.day.app/YOUR_ACTUAL_DEVICE_KEY
-```
+## 3. Test the Lock Screen
 
-This is a placeholder: copy **your real address from Bark**, not the example. The full address or its device key is accepted. Only the default `api.day.app` service is supported.
+Select **Send a test notification** once, then close the website and lock your phone. Usually it arrives in about a minute. Confirm that it actually appears; “Accepted by Bark” alone is not proof of delivery. Tests have a 10-minute cooldown.
 
-Keep the address private; it can send notifications to your device. You do not need to share it with the author. Do not use someone else's address.
+**After setup, the website and your computer can stay closed.** Your phone must be online and allow notifications. Page notifications are separate and require the page to keep running.
 
-**Checkpoint:** your actual address is on the clipboard.
+## Manage or stop
 
-## 3. Connect on the website
+- Change settings here and select **Save alert preferences**.
+- Turn both alert types off and save to pause; select **Unsubscribe and delete address** to stop and remove the address. An in-flight notification may still arrive.
+- In another browser, paste the same address to restore management. This replaces the previous browser's management access.
 
-1. Open **[Codex Echo](https://echo-radar.pages.dev/)** in iPhone Safari. Use the header language switch for English.
-2. Scroll below the collected Tibo posts and expand **Phone alerts from the cloud**. This is separate from **Page notifications**.
-3. Paste your address into **Your Bark push address**. It is hidden by default; select **Show address** to check it.
-4. Choose your preferences:
+## If nothing arrives
 
-| Setting | Meaning |
-|---|---|
-| **Reset announcements** | Newly collected public announcements, not your personal account allowance |
-| **Source forecasts** | Valid new estimates reaching your threshold, not official promises |
-| **Forecast alert threshold** | 40%–90% in steps of 5; 75% means a forecast must reach or exceed 75% |
-| **Notification language** | Chinese or English; independent of website display language |
+- Check Bark's Lock Screen permission, Focus and Scheduled Summary.
+- Refresh the status on the website; verify the address if the request failed.
+- A successful test does not guarantee new alerts: a new qualifying event is needed.
+- Avoid running both website and GitHub notifications for the same phone.
 
-5. Select **Connect and save**. Defaults are both types enabled, 60% and the initial form's selected language; choose your desired message language explicitly.
-
-**Checkpoint:** a connected status, masked device hint or connection-success message appears. Pasting without saving does not subscribe you. “No device linked here” means this browser has no management credential.
-
-## 4. Close the website and test the Lock Screen
-
-1. Select **Send a test notification** once in the connected section.
-2. After the queued message appears, close the website and lock the phone. Dispatch usually takes about a minute and may queue longer when busy.
-3. Look for **“Codex Echo · Push test”**, or **「Codex 回响 · 锁屏推送测试」** for Chinese messages.
-4. Reopen the page and select **Refresh status** if you want to inspect the recent receipt.
-
-**Checkpoint: the test actually appears on your Lock Screen.** Queued means waiting. “Accepted by Bark” means only that the service accepted the request; it is not phone-delivery proof. Tests have a ten-minute cooldown.
-
-The test is not a reset or forecast announcement. Once verified, leave cloud alerts running without keeping the website or your computer open.
-
-## Change preferences or unsubscribe
-
-- Edit switches, threshold or language and select **Save alert preferences**. Unsaved edits do not apply.
-- To pause cloud alerts, turn both types off and save. Closing the website does not pause Bark.
-- Re-enable a type and save to resume.
-- To stop, select **Unsubscribe and delete address**, then confirm. Future cloud alerts stop and the saved address is removed; a request already in flight may still arrive.
-- In a new browser or after clearing browser data, paste the same Bark address again to restore management. This invalidates the previous browser's management credential. An unlinked browser alone does not mean your existing cloud subscription stopped.
-
-## Troubleshooting
-
-| Symptom | What to do |
-|---|---|
-| Cannot find settings | Scroll below Tibo posts and expand Phone alerts from the cloud |
-| Disabled button | Paste your address, wait for pending requests, or allow the test cooldown to expire |
-| Invalid address | Copy again from this phone's Bark; do not use examples, another person's address or a self-hosted server |
-| Queued test not received | Wait, then Refresh status. For failure, check the address/network. Uncertain outcomes are not automatically repeated |
-| Inside Bark but no Lock Screen alert | Check notification permission, Lock Screen, Focus and Scheduled Summary; open Bark once and retry after cooldown |
-| Test received, no automatic message | No historical backfill. A new qualifying announcement or valid forecast meeting your threshold is required |
-| Duplicates | Check for a personal GitHub notifier or another service sending to the same phone; retain one channel |
-| Cannot manage an old connection | Use the original browser, or paste the same Bark address to restore management |
-
-The current shared free trial supports 30 devices and 20 send attempts per device per UTC date, including tests/retries. With instant queues configured, discovery submits immediately; otherwise minute dispatch remains. Public posts and confirmations are checked every minute, sending or enqueuing in the same run. Full collection is scheduled separately; immediate receipt is not guaranteed. Upstreams, Bark, networks and phone settings affect receipt.
-
-**Use Bark for closed-page alerts. Page notifications require the page to keep running.** Running your own program is optional; see the separate [GitHub setup guide](GITHUB_BARK.en.md) if desired.
-
-The Reset announcements switch also includes newly announced precise reset plans. These messages say Planned reset announced and do not confirm completion. No reconnection is needed; the forecast threshold does not apply to plans.
-
-Two-stage alerts: with Reset announcements enabled, a new plan triggers one alert and a later newly collected explicit completion confirmation triggers a separate alert. Each message is deduplicated. Reaching the target alone never triggers completion; without source confirmation the state stays unconfirmed and says nothing about your personal account allowance.
-
-For maintainers enabling faster sources and queues: [free deployment guide](CLOUDFLARE_QUEUES.en.md). Attribution: [Data: codex-reset.com](https://codex-reset.com).
-
-Additional behavior: definite resets without a time trigger a commitment alert. Self-replies may inherit parent context; ordinary posts and replies to others never push. A concrete plan supersedes an unsent commitment in the same thread, and completion alerts are deduplicated across sources for each device over six hours. See [minute discovery and verification](MINUTE_DISCOVERY.en.md).
+The shared service currently supports 30 devices, with 20 send attempts per device per UTC day, including tests and retries. If full, use the [personal GitHub notifier](GITHUB_BARK.en.md).
